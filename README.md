@@ -42,3 +42,20 @@ long minTimeMillis = 3000L;
 STStopTrajectory outTraj = new CBSMoT().run(traj, epsMeters, minTimeMillis);
 ```
 *Note: see [`FindStopsCBSmot.java`](https://github.com/lukehb/137-stopmove/blob/master/src/main/java/onethreeseven/stopmove/experiments/FindStopsCBSmot.java) for a full example.
+
+## Working with the source
+The source is licensed under the MIT licsense so feel free to use it in your projects. It does have some dependencies which are listed in the build.gradle file. The easiest use-case is setting the source up as a gradle project and letting gradle grab those dependencies for you. Next easiest is maven, though you will have translate the dependencies yourself.
+
+Using this project as a library in your own project, your build.gradle file will have to include these:
+
+```groovy
+repositories {
+    maven{url 'https://dl.bintray.com/lukehb/137-stopmove'} //hosted on bintray
+}
+
+dependencies {
+    compile 'onethreeseven:stopmove:0.0.1'
+}
+```
+
+....Or without cloning, the built source is also hosted on BinTray and can be downloaded: [ ![Download](https://api.bintray.com/packages/lukehb/137-stopmove/137-stopmove/images/download.svg) ](https://bintray.com/lukehb/137-stopmove/137-stopmove/_latestVersion)
