@@ -13,7 +13,6 @@ import onethreeseven.geo.projection.AbstractGeographicProjection;
 import onethreeseven.geo.projection.ProjectionEquirectangular;
 import onethreeseven.stopmove.algorithm.CBSMoT;
 import onethreeseven.stopmove.algorithm.StopClassificationStats;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;

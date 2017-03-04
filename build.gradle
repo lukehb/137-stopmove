@@ -23,6 +23,8 @@ allprojects {
         jcenter()
         mavenCentral()
         mavenLocal()
+        //datastrcutures module hosted on bintray
+        maven{url 'https://dl.bintray.com/lukehb/137-datastructures'}
     }
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
