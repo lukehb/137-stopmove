@@ -35,8 +35,8 @@ public class RunningTimeSynthPOSMITvsCBSMoT {
             STStopTrajectory traj = DataGeneratorUtil.generateTrajectoryWithStops(
                     nEntries, nStops, 1000L, 10, 0.3, startLat, startLon);
 
-            int searchRadius = 10;
-            double spatialParam = algoPOSMIT.calculateStopVariance(traj, searchRadius);
+            final int searchRadius = 10;
+            final double spatialParam = algoPOSMIT.estimateStopVariance(traj);
 
             System.gc();
 

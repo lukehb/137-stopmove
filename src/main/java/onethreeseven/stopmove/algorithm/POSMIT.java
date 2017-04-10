@@ -14,6 +14,18 @@ public class POSMIT {
 
     private static final double cutoff = Maths.gaussian(3, 1, 0, 1);
 
+    public double estimateStopVariance(SpatioCompositeTrajectory<? extends STPt> traj){
+        double[] displacements = new double[traj.size()-1];
+        for (int i = 1; i < traj.size()-1; i++) {
+            displacements[i] = traj.getEuclideanDistance(i-1, i);
+        }
+        return new Kneedle().run(displacements, 0, 50);
+    }
+
+    public double[] run(SpatioCompositeTrajectory<? extends STPt> stTraj, int nSearchRadius){
+        return run(stTraj, nSearchRadius, estimateStopVariance(stTraj));
+    }
+
     /**
      * Run the POSMIT algorithm.
      * @param stTraj A spatio-composite trajectory.
@@ -53,72 +65,6 @@ public class POSMIT {
         }
         return stopTraj;
     }
-
-    public double calculateStopVariance(SpatioCompositeTrajectory<? extends STPt> traj, int nSearchRadius){
-
-        //find min displacement and the associated index
-        double[] prevCoord = traj.getCoords(0, true);
-        double[] curCoord = traj.getCoords(1, true);
-        double minDisp = Double.MAX_VALUE;
-        int idxOfMinDisp = 0;
-
-        for (int i = 1; i < traj.size()-1; i++) {
-            double[] nextCoord = traj.getCoords(i+1, true);
-            double disp =  Maths.dist(prevCoord, curCoord) + Maths.dist(curCoord, nextCoord);
-            if(disp < minDisp){
-                minDisp = disp;
-                idxOfMinDisp = i;
-            }
-            prevCoord = curCoord;
-            curCoord = nextCoord;
-        }
-
-        //calculate pairwise displacement between entries
-
-        prevCoord = traj.getCoords(idxOfMinDisp, true);
-        double[] arr = new double[nSearchRadius*2];
-        int n = 0;
-        //go left
-        int expandedLeft = 0;
-        for (int i = idxOfMinDisp - 1; i >= 0; i--) {
-            double[] coord = traj.getCoords(i, true);
-            double disp = Maths.dist(prevCoord, coord);
-            if(disp != 0){
-                expandedLeft++;
-                arr[n] = disp;
-                n++;
-                prevCoord = coord;
-                if(expandedLeft >= nSearchRadius){
-                    break;
-                }
-            }
-        }
-        //go right
-        prevCoord = traj.getCoords(idxOfMinDisp, true);
-        int expandedRight = 0;
-        for (int i = idxOfMinDisp; i < traj.size() - 1; i++) {
-            double[] coord = traj.getCoords(i, true);
-            double disp = Maths.dist(prevCoord, coord);
-            if(disp != 0){
-                expandedRight++;
-                arr[n] = disp;
-                n++;
-                prevCoord = coord;
-                if(expandedRight >= nSearchRadius){
-                    break;
-                }
-            }
-        }
-        //get avg disp
-        if(n == nSearchRadius*2){
-            return Maths.mean(arr);
-        }else{
-            double[] disps = new double[n];
-            System.arraycopy(arr, 0, disps, 0, n);
-            return Maths.mean(disps);
-        }
-    }
-
 
     private double getStopPr(SpatioCompositeTrajectory<? extends STPt> stTraj, int centerIdx,
                              int nSearchRadius, double stopVariance){
@@ -162,6 +108,9 @@ public class POSMIT {
 
     private double score(double[] pt, double[] stopCentroid, double stopVariance){
         double disp = Maths.dist(pt, stopCentroid);
+        if(stopVariance == 0){
+            return 0;
+        }
         return kernel(disp/stopVariance);
     }
 

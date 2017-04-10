@@ -43,7 +43,7 @@ public class StopProbabilityVsParameterEffectiveness {
 
     private static void testSpatialParamVsEffectiveness(STStopTrajectory traj){
 
-        double estimatedSp = algoPosmit.calculateStopVariance(traj, indexSearchRadius);
+        double estimatedSp = algoPosmit.estimateStopVariance(traj);
         System.out.println("SpatialParam,POSMIT,CBSMoT"
                 + ",minStopMsCBSMoT = " + minStopMsCbSmot
                 + ",minStopPr = " + minStopPr

@@ -1,7 +1,6 @@
 package onethreeseven.stopmove.experiments;
 
 import onethreeseven.common.util.FileUtil;
-import onethreeseven.common.util.Maths;
 import onethreeseven.datastructures.data.STStopTrajectoryParser;
 import onethreeseven.datastructures.data.resolver.IdFieldResolver;
 import onethreeseven.datastructures.data.resolver.NumericFieldsResolver;
@@ -11,11 +10,11 @@ import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.datastructures.model.SpatioCompositeTrajectory;
 import onethreeseven.geo.projection.AbstractGeographicProjection;
 import onethreeseven.geo.projection.ProjectionEquirectangular;
+import onethreeseven.stopmove.algorithm.Kneedle;
 import onethreeseven.stopmove.algorithm.POSMIT;
 import onethreeseven.stopmove.algorithm.StopClassificationStats;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -28,7 +27,7 @@ import java.util.Map;
  */
 public class MeasureSpatialNoiseParameter {
 
-    private static final String filename = "shopping_trip";
+    private static final String filename = "ferry";
     private static final File inFile = new File(FileUtil.makeAppDir("traj"), filename + ".txt");
     private static final AbstractGeographicProjection projection = new ProjectionEquirectangular();
 
@@ -44,7 +43,7 @@ public class MeasureSpatialNoiseParameter {
 //                true).parse(inFile);
 
         final Map<String, STStopTrajectory> trajMap = new STStopTrajectoryParser(
-                new ProjectionEquirectangular(),
+                projection,
                 new IdFieldResolver(0),
                 new NumericFieldsResolver(1,2),
                 new TemporalFieldResolver(3),
@@ -54,35 +53,36 @@ public class MeasureSpatialNoiseParameter {
         final POSMIT posmit = new POSMIT();
         final StopClassificationStats stats = new StopClassificationStats();
         final int nSearchRadius = 10;
+        double estimatedMinStopCutoff = 0.8;
+        final Kneedle kneedle = new Kneedle();
+
 
         for (STStopTrajectory traj : trajMap.values()) {
 
-
-
+            double estimatedStopVariance = kneedle.run(getDisplacements(traj), 0, 50);
+            System.out.println("Estimated stop variance: " + estimatedStopVariance);
             System.out.println("Computing stop probabilities using neighbourhood: " + nSearchRadius);
-            System.out.println("Displacement,Min Stop Pr,FScore");
+            System.out.println("Stop Variance, Min Stop Pr, MCC");
 
-            for (double stopVariance = 0; stopVariance < 3.0; stopVariance += 0.01) {
+            for (double stopVariance = 0; stopVariance < 10; stopVariance += 0.5) {
                 double[] stopPrs = posmit.run(traj, nSearchRadius, stopVariance);
-                double[] minmaxGap = Maths.maxGap(stopPrs);
-                //double gap = minmaxGap[1] - minmaxGap[0];
-                double minConf = Maths.mean(minmaxGap);
 
-                STStopTrajectory stopTraj = posmit.toStopTrajectory(traj, stopPrs, minConf);
+                estimatedMinStopCutoff = kneedle.run(stopPrs);
+
+                STStopTrajectory stopTraj = posmit.toStopTrajectory(traj, stopPrs, estimatedMinStopCutoff);
                 stats.calculateStats(traj, stopTraj);
 
-                System.out.println(stopVariance + "," + minConf + "," + stats.getfScore());
+                System.out.println(stopVariance + "," + estimatedMinStopCutoff + "," + stats.getMCC());
             }
         }
 
     }
 
-    private static double[] computeDisplacements(SpatioCompositeTrajectory traj){
+    private static double[] getDisplacements(SpatioCompositeTrajectory traj){
         double[] displacements = new double[traj.size()-1];
         for (int i = 1; i < traj.size()-1; i++) {
             displacements[i] = traj.getEuclideanDistance(i-1, i);
         }
-        Arrays.sort(displacements);
         return displacements;
     }
 

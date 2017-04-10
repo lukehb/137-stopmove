@@ -49,7 +49,7 @@ public class FindStopsPOSMIT {
         for (Map.Entry<String, STStopTrajectory> entry : trajMap.entrySet()) {
             STStopTrajectory traj = entry.getValue();
 
-            double stopVariance = algo.calculateStopVariance(traj, nSearchRadius);
+            double stopVariance = algo.estimateStopVariance(traj);
 
             System.out.println("Computing stop probabilities for trajectory: " + entry.getKey());
             System.out.println("Search radius: " + nSearchRadius);
