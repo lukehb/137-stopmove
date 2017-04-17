@@ -1,62 +1,55 @@
 package onethreeseven.stopmove.algorithm;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import static onethreeseven.stopmove.algorithm.Maths2.gaussianSmooth;
 
 /**
- * Given set of values look for the elbow/knee point.
+ * Given set of values look for the elbow/knee points.
  * See paper: "Finding a “Kneedle” in a Haystack: Detecting Knee Points in System Behavior"
  * @author Luke Bermingham
  */
 public class Kneedle {
 
     /**
-     * This algorithm finds the so-called elbow in the data.
-     * It does this by sorting the data, then making a line between the start
-     * and end data points in the sorted data. Each point in the data is the projected
-     * onto this line, and the point with the biggest euclidean distance is considered
-     * the most likely elbow.
-     * See paper: "Finding a “Kneedle” in a Haystack: Detecting Knee Points in System Behavior"
-     * for more details.
-     * @param data The data to find an elbow in.
-     * @param minValue Discard values in the data that are smaller than this value.
-     * @param maxValue Discard values in the data that are larger than this value.
-     * @return The value of the elbow point.
+     * Finds the indices of all local minimum or local maximum values.
+     * @param data The data to process
+     * @param findMinima If true find local minimums, else find local maximums.
+     * @return A list of the indices that have local minimum or maximum values.
      */
-    public double run(double[] data, double minValue, double maxValue){
-        //discard a any value 'y' that does satisfy minValue >= y <= maxValue.
-        data = Arrays.stream(data).filter(y -> y <= maxValue && y >= minValue).sorted().toArray();
-        //prepare the data into the unit range and subtract normalised index
-        double[] normalisedData = prepare(data);
+    private ArrayList<Integer> findCandidateIndices(double[] data, boolean findMinima){
+        ArrayList<Integer> candidates = new ArrayList<>();
+        //an index is considered a candidate if both of its adjacent indices are
+        //greater or less (depending on whether we want local minima or local maxima)
+        for (int i = 1; i < data.length - 1; i++) {
+            double prev = data[i-1];
+            double cur = data[i];
+            double next = data[i+1];
+            boolean isCandidate = (findMinima) ? (prev > cur && next > cur) : (prev < cur && next < cur);
+            if(isCandidate){
+                candidates.add(i);
+            }
+        }
+        return candidates;
+    }
 
-        //x-axis is the indices of the data
-        //y-axis is the values of the data
 
-        //make a vector, called "b", between start and end point
-        double[] b = new double[]{normalisedData.length-1, normalisedData[normalisedData.length-1] - normalisedData[0]};
-        double bNorm = Math.sqrt( b[0]*b[0] + b[1]*b[1] );
-        double[] unitB = new double[]{ b[0]/bNorm, b[1]/bNorm };
-        //go through each point in the data and make a vector called "a" between the
-        //the current point and the first point
-        //the best biggest distance is most likely the elbow
-        double biggestDist = 0;
+    /**
+     * Find the index in the data the represents a most exaggerated elbow point.
+     * @param data the data to find an elbow in
+     * @return The index of the elbow point.
+     */
+    private int findElbowIndex(double[] data){
+
         int bestIdx = 0;
-
-        for (int i = 0; i < normalisedData.length; i++) {
-            double[] a = new double[]{i, normalisedData[i] - normalisedData[0]};
-            //the projection of a onto b, is (a dot unitB) * unitB
-            double a1 = a[0]*unitB[0] + a[1]*unitB[1];
-            double[] projAonB = new double[]{a1*unitB[0], a1*unitB[1]};
-            //euclidean distance between projection and a
-            double dist = Math.sqrt(
-                    (projAonB[0]-a[0])*(projAonB[0]-a[0]) +
-                            (projAonB[1]-a[1])*(projAonB[1]-a[1]) );
-            if(dist > biggestDist){
-                biggestDist = dist;
+        double bestScore = 0;
+        for (int i = 0; i < data.length; i++) {
+            double score = Math.abs(data[i]);
+            if(score > bestScore){
+                bestScore = score;
                 bestIdx = i;
             }
         }
-
-        return data[bestIdx];
+        return bestIdx;
     }
 
     /**
@@ -91,14 +84,59 @@ public class Kneedle {
         return normalisedData;
     }
 
-    /**
-     * Finds an elbow point in the data.
-     * @see Kneedle#run(double[], double, double) It calls this with Double.MIN_VALUE and Double.MAX_VALUE.
-     * @param data The data to find an elbow for.
-     * @return The value of the elbow point.
-     */
+
+
     public double run(double[] data){
-        return run(data, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        double[] normalisedData = prepare(gaussianSmooth(data, 3));
+        int elbowIdx = findElbowIndex(normalisedData);
+        return data[elbowIdx];
+    }
+
+    /**
+     * This algorithm finds the so-called elbow/knee in the data.
+     * It does this by sorting the data, then making a line between the start
+     * and end data points in the sorted data. Each point in the data is the projected
+     * onto this line, and the point with the biggest euclidean distance is considered
+     * the most likely elbow.
+     * See paper: "Finding a “Kneedle” in a Haystack: Detecting Knee Points in System Behavior"
+     * for more details.
+     * @param data The data to find an elbow in.
+     * @param s How many "flat" points to require before we consider it a knee/elbow.
+     * @param findElbows Whether to find elbows or knees.
+     * @return The elbow or knee values.
+     */
+    public ArrayList<Double> run(double[] data, double s, boolean findElbows){
+        ArrayList<Double> localMinMaxPts = new ArrayList<>();
+        //smooth the data to make local minimum/maximum easier to find (this is Step 1 in the paper)
+        double[] smoothedData = gaussianSmooth(data, 3);
+        //prepare the data into the unit range and subtract normalised index (this is step 2 & 3 in the paper)
+        double[] normalisedData = prepare(smoothedData);
+        //find candidate indices (this is step 4 in the paper)
+        {
+            ArrayList<Integer> candidateIndices = findCandidateIndices(normalisedData, findElbows);
+            //go through each candidate index, i, and see if the indices after i are satisfy the threshold requirement
+            //(this is step 5 in the paper)
+            double step = 1.0/data.length;
+            step = findElbows ? step * s : step * -s;
+
+            //check each candidate to see if it is a real elbow/knee
+            for (int i = 0; i < candidateIndices.size(); i++) {
+                Integer candidateIdx = candidateIndices.get(i);
+                Integer endIdx = (i + 1 < candidateIndices.size()) ? candidateIndices.get(i+1) : data.length;
+
+                double threshold = normalisedData[candidateIdx] + step;
+
+                for (int j = candidateIdx + 1; j < endIdx; j++) {
+                    boolean isRealElbowOrKnee = (findElbows) ?
+                            normalisedData[j] > threshold : normalisedData[j] < threshold;
+                    if(isRealElbowOrKnee) {
+                        localMinMaxPts.add(data[candidateIdx]);
+                        break;
+                    }
+                }
+            }
+        }
+        return localMinMaxPts;
     }
 
 }

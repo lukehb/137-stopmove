@@ -13,6 +13,8 @@ import onethreeseven.geo.projection.ProjectionEquirectangular;
 import onethreeseven.stopmove.algorithm.Kneedle;
 import onethreeseven.stopmove.algorithm.POSMIT;
 import onethreeseven.stopmove.algorithm.StopClassificationStats;
+import onethreeseven.stopmove.algorithm.UnivariateKMeans;
+
 import java.io.File;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -69,7 +71,7 @@ public class FindBusStops {
 
     private static final POSMIT algo = new POSMIT();
     private static final Kneedle paramEstimator = new Kneedle();
-    private static final int searchRadius = 2;
+    private static final int searchRadius = 5;
     private static final StopClassificationStats stats = new StopClassificationStats();
 
     private static final boolean cleanUp = false;
@@ -89,19 +91,31 @@ public class FindBusStops {
     public static void findStops(Map<String, STStopTrajectory> trajs){
 
          for (Map.Entry<String, STStopTrajectory> entry : trajs.entrySet()) {
-            System.out.println("Find stops for traj: " + entry.getKey());
-            //estimating stop variance by finding displacements
-            STStopTrajectory traj = entry.getValue();
-            double stopVarianceEst = algo.estimateStopVariance(traj);
-            System.out.println("Estimated stop variance: " + stopVarianceEst);
-            //run posmit
-            double[] stopPrs = algo.run(traj, searchRadius, stopVarianceEst);
-            double minPrEst = paramEstimator.run(stopPrs);
-            System.out.println("Estimated minimum stop pr cutoff: " + minPrEst);
-            //turn into stop traj
-            STStopTrajectory stopTraj = algo.toStopTrajectory(traj, stopPrs, minPrEst);
-            stats.calculateStats(traj, stopTraj);
-            stats.printStats();
+             System.out.println("Find stops for traj: " + entry.getKey());
+             //estimating stop variance by finding displacements
+             STStopTrajectory traj = entry.getValue();
+             double stopVarianceEst = algo.estimateStopVariance(traj);
+             System.out.println("Estimated stop variance: " + stopVarianceEst);
+             //run posmit
+
+
+             //double minStopPr = algo.estimateMinStopPr(stopPrs);
+             //System.out.println("Estimated minimum stop pr cutoff: " + minStopPr);
+             //STStopTrajectory stopTraj = algo.toStopTrajectory(traj, stopPrs, minStopPr);
+             //stats.calculateStats(traj, stopTraj);
+             //stats.printStats();
+
+             System.out.println("StopVariance,MinStopPr,MCC");
+             //go over a range of min stop prs
+             for (double stopVariance = 0.5; stopVariance < 20; stopVariance+= 0.5) {
+                 double[] stopPrs = algo.run(traj, searchRadius, stopVariance);
+                 //turn into stop traj
+                 double minStopPr = algo.estimateMinStopPr(stopPrs);
+
+                 STStopTrajectory stopTraj = algo.toStopTrajectory(traj, stopPrs, minStopPr);
+                 stats.calculateStats(traj, stopTraj);
+                 System.out.println(stopVariance + "," + minStopPr + "," + stats.getMCC());
+             }
         }
     }
 
