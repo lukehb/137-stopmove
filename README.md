@@ -4,6 +4,7 @@ Algorithms to automatically discover stops and moves in GPS trajectories.
 ## Algorithms
 * **POSMIT** - Probability of Stops and Moves in Trajectories. Uses a probabilistic approach to determine if a given entry in the trajectory is stopping or moving. Unlike traditional approaches POSMIT gives the user a quantifiable accuracy in regards to the classifications of each stop/move.
 * **CB-SMoT** - Clustering-based Stop and Moves of Trajectories. Uses a modified DB-SCAN algorithm to find stops. 
+* **SMoT** - Stops and Moves of Trajectories. Uses predefined regions to search for a minimum duration stay within those region. Unlike the original algorithm our implementation creates these regions by divided up the studying region into uniform cells. The original algorithms calls for the author to pass in interesting regions.
 
 ## Usages
 Below are some code usages for each of the algorithms provided in this repo.
