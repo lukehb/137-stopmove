@@ -12,7 +12,7 @@ buildscript {
 apply plugin: 'com.jfrog.bintray'
 
 group 'onethreeseven'
-version '0.0.1'
+version '0.0.2'
 
 apply plugin: 'java'
 
