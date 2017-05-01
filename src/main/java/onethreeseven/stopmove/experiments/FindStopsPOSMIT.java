@@ -24,7 +24,7 @@ public class FindStopsPOSMIT {
 
     private static final boolean writeOutputFile = false;
 
-    private static final String filename = "synthetic_100k";
+    private static final String filename = "short_walk";
     private static final File inFile = new File(FileUtil.makeAppDir("traj"), filename + ".txt");
 
     private static final boolean computeStats = true;
@@ -43,7 +43,7 @@ public class FindStopsPOSMIT {
                 true).parse(inFile);
 
         final POSMIT algo = new POSMIT();
-        final int nSearchRadius = 2;
+        final int nSearchRadius = 4;
 
         //actual algorithm
         for (Map.Entry<String, STStopTrajectory> entry : trajMap.entrySet()) {
@@ -58,7 +58,7 @@ public class FindStopsPOSMIT {
             double[] stopProbabilities = algo.run(traj, nSearchRadius, stopVariance);
 
             //estimate a good min confidence for classifying stops
-            double minStopConfidence = 0.8;//Maths.mean(Maths.maxGap(stopProbabilities));
+            double minStopConfidence = algo.estimateMinStopPr(stopProbabilities);
             System.out.println("Min stop confidence of: " + minStopConfidence);
 
             STStopTrajectory stopTraj = algo.toStopTrajectory(traj, stopProbabilities, minStopConfidence);

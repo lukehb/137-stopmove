@@ -21,12 +21,12 @@ import java.util.Map;
  * Experiment to test find stops using CB-SMoT
  * @author Luke Bermingham
  */
-public class FindStopsCBSmot {
+public class FindStopCBSMoT {
 
-    private static final String filename = "hike";
+    private static final String filename = "house_visit";
     private static final File inFile = new File(FileUtil.makeAppDir("traj"), filename + ".txt");
 
-    private static final long minTimeMillis = 1000;
+    private static final long minTimeMillis = 9000;
     private static final double epsMeters = 0.05;
 
     private static final String metersStr = String.format("%.2f", epsMeters).replace(".", "-");
@@ -37,6 +37,7 @@ public class FindStopsCBSmot {
     private static final CBSMoT algo = new CBSMoT();
 
     private static final boolean calculateStats = true;
+    private static final boolean writeOutput = false;
     private static final StopClassificationStats stats = new StopClassificationStats();
 
     public static void main(String[] args) {
@@ -56,29 +57,29 @@ public class FindStopsCBSmot {
 
         for (Map.Entry<String, STStopTrajectory> entry : trajMap.entrySet()) {
             System.out.println("CB-SMoT finding stops for traj: " + entry.getKey());
-            STStopTrajectory outTraj = algo.run(entry.getValue(), epsMeters, minTimeMillis);
-            outTraj.toGeographic();
-            outMap.put(entry.getKey(), outTraj);
+            STStopTrajectory calculatedTraj = algo.run(entry.getValue(), epsMeters, minTimeMillis);
+            if(calculateStats){
+                STStopTrajectory truth = entry.getValue();
+                System.out.println("Calculating stats for traj: " + entry.getKey());
+                stats.calculateStats(truth, calculatedTraj);
+                stats.printStats();
+            }
+            calculatedTraj.toGeographic();
+            if(writeOutput){
+                outMap.put(entry.getKey(), calculatedTraj);
+            }
         }
         long endTime = System.currentTimeMillis();
         long timeTakenMs = endTime - startTime;
         System.out.println("CB-SMoT took: " + timeTakenMs + "ms to process " + trajMap.size() + " trajectories.");
 
-        //convert to geo first
-        System.out.println("Converting to geographic");
-        outMap.values().forEach(SpatioCompositeTrajectory::toGeographic);
-        System.out.println("Preparing to write to file");
-        new SpatioCompositieTrajectoryWriter().write(outFile, outMap);
-        System.out.println("Collect cb-smot stops at: " + outFile.getAbsolutePath());
-
-        if(calculateStats){
-            for (Map.Entry<String, STStopTrajectory> entry : trajMap.entrySet()) {
-                STStopTrajectory truth = entry.getValue();
-                STStopTrajectory calculated = outMap.get(entry.getKey());
-                System.out.println("Calculating stats for traj: " + entry.getKey());
-                stats.calculateStats(truth, calculated);
-                stats.printStats();
-            }
+        if(writeOutput){
+            //convert to geo first
+            System.out.println("Converting to geographic");
+            outMap.values().forEach(SpatioCompositeTrajectory::toGeographic);
+            System.out.println("Preparing to write to file");
+            new SpatioCompositieTrajectoryWriter().write(outFile, outMap);
+            System.out.println("Collect cb-smot stops at: " + outFile.getAbsolutePath());
         }
     }
 

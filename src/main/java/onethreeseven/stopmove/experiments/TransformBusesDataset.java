@@ -27,7 +27,7 @@ import java.util.function.Function;
  * Finds the stops of the buses.
  * @author Luke Bermingham
  */
-public class FindBusStops {
+public class TransformBusesDataset {
 
     //0 - 'Timestamp micro since 1970 01 01 00:00:00 GMT
     //1 - 'Line ID
@@ -58,70 +58,16 @@ public class FindBusStops {
             new TemporalFieldResolver(microsToTime, 0),
             new StopFieldResolver(14, "1"), true);
 
-    private static final STStopTrajectoryParser standardParser = new STStopTrajectoryParser(
-            new ProjectionEquirectangular(),
-            new IdFieldResolver(0),
-            new NumericFieldsResolver(1,2),
-            new TemporalFieldResolver(3),
-            new StopFieldResolver(4),
-            true
-    );
 
     private static final File inFile = new File(FileUtil.makeAppDir("traj"), "buses.txt");
 
-    private static final POSMIT algo = new POSMIT();
-    private static final Kneedle paramEstimator = new Kneedle();
-    private static final int searchRadius = 5;
-    private static final StopClassificationStats stats = new StopClassificationStats();
-
-    private static final boolean cleanUp = false;
-
     public static void main(String[] args) {
-
-        if(cleanUp){
-            writeTrajsOut(busesParser.parse(inFile));
-        }
-        else{
-            File singleBusFile = new File(FileUtil.makeAppDir("traj/buses"), "33535.txt");
-            Map<String, STStopTrajectory> trajs = standardParser.parse(singleBusFile);
-            findStops(trajs);
-        }
-    }
-
-    public static void findStops(Map<String, STStopTrajectory> trajs){
-
-         for (Map.Entry<String, STStopTrajectory> entry : trajs.entrySet()) {
-             System.out.println("Find stops for traj: " + entry.getKey());
-             //estimating stop variance by finding displacements
-             STStopTrajectory traj = entry.getValue();
-             double stopVarianceEst = algo.estimateStopVariance(traj);
-             System.out.println("Estimated stop variance: " + stopVarianceEst);
-             //run posmit
-
-
-             //double minStopPr = algo.estimateMinStopPr(stopPrs);
-             //System.out.println("Estimated minimum stop pr cutoff: " + minStopPr);
-             //STStopTrajectory stopTraj = algo.toStopTrajectory(traj, stopPrs, minStopPr);
-             //stats.calculateStats(traj, stopTraj);
-             //stats.printStats();
-
-             System.out.println("StopVariance,MinStopPr,MCC");
-             //go over a range of min stop prs
-             for (double stopVariance = 0.5; stopVariance < 20; stopVariance+= 0.5) {
-                 double[] stopPrs = algo.run(traj, searchRadius, stopVariance);
-                 //turn into stop traj
-                 double minStopPr = algo.estimateMinStopPr(stopPrs);
-
-                 STStopTrajectory stopTraj = algo.toStopTrajectory(traj, stopPrs, minStopPr);
-                 stats.calculateStats(traj, stopTraj);
-                 System.out.println(stopVariance + "," + minStopPr + "," + stats.getMCC());
-             }
-        }
+        writeTrajsOut(busesParser.parse(inFile));
     }
 
     public static void writeTrajsOut(Map<String, STStopTrajectory> trajs){
 
-        double stopVariance = 5;
+        double stopVariance = 10;
 
         //write the buses into their own folder, one traj per file
         SpatioCompositeTrajectoryWriter writer = new SpatioCompositeTrajectoryWriter();
@@ -147,7 +93,8 @@ public class FindBusStops {
 
             singleTraj.put(entry.getKey(), traj);
             writer.write(outFile, singleTraj);
-            break;
+
+            System.out.println("File output at: " + outFile.getAbsolutePath());
         }
     }
 

@@ -24,13 +24,13 @@ import java.util.Map;
  */
 public class MeasurePOSMIT {
 
-    private static final String filename = "short_walk";
+    private static final String filename = "38092";
     private static final File inFile = new File(FileUtil.makeAppDir("traj"), filename + ".txt");
     private static final AbstractGeographicProjection projection = new ProjectionEquirectangular();
 
-    private static final boolean testStopVariance = true;
-    private static final boolean testSearchRadius = false;
-    private static final boolean testMinStopPr = false;
+    private static final boolean testStopVariance = false;
+    private static final boolean testSearchRadius = false;//true;
+    private static final boolean testMinStopPr = true;//true;
 
 
     public static void main(String[] args) {
@@ -45,11 +45,11 @@ public class MeasurePOSMIT {
                 true).parse(inFile);
 
         if(testStopVariance){
-            final double minStopVariance = 0.5;
+            final double minStopVariance = 0;
             final double maxStopVariance = 20;
-            final double stopVarianceStep = 0.5;
-            final int searchRadius = 4;
-            final double minStopPr = 0.8;
+            final double stopVarianceStep = 0.1;
+            final int searchRadius = 21;
+            final double minStopPr = 0.5;
             for (STStopTrajectory traj : trajMap.values()) {
                 System.out.println("Estimated stop variance: " + new POSMIT().estimateStopVariance(traj));
                 testStopVariance(traj, minStopVariance, maxStopVariance,
@@ -57,20 +57,21 @@ public class MeasurePOSMIT {
             }
         }
         if(testMinStopPr){
-            final double minEps = 0.05;
+            final double minEps = 0;
             final double maxEps = 1;
             final double epsStep = 0.05;
-            final double stopVariance = 1.5;
-            final int searchRadius = 10;
+            //final double stopVariance = 2.922;
+            final int searchRadius = 1;
             for (STStopTrajectory traj : trajMap.values()) {
+                double stopVariance = new POSMIT().estimateStopVariance(traj);
                 testMinStopPr(traj, minEps, maxEps, epsStep, stopVariance, searchRadius);
             }
         }
         if(testSearchRadius){
             final int minSearchRadius = 1;
-            final int maxSearchRadius = 20;
-            //double stopVariance = 1.5;
-            final double minStopPr = 0.7;
+            final int maxSearchRadius = 50;
+            //double stopVariance = 17.32;
+            final double minStopPr = 0.45;
             for (STStopTrajectory trajectory : trajMap.values()) {
                 double stopVariance = new POSMIT().estimateStopVariance(trajectory);
 
@@ -85,16 +86,24 @@ public class MeasurePOSMIT {
         System.out.println("Test where we vary the minStopPr (eps) parameter.");
         System.out.println("Search radius: " + searchRadius);
         System.out.println("Stop variance: " + stopVariance);
-        System.out.println("Stop Variance, Min Stop Pr, Search Radius, MCC");
+        System.out.println("Min Stop Pr, TP, TN, FP, FN, MCC");
 
         final StopClassificationStats stats = new StopClassificationStats();
         final POSMIT algo = new POSMIT();
 
-        for (double minStopPr = minEps; minStopPr <= maxEps; minStopPr+=epsStep) {
-            double[] stopPrs = algo.run(traj, searchRadius, stopVariance);
+        double[] stopPrs = algo.run(traj, searchRadius, stopVariance);
+        System.out.println("Estimated eps: " + algo.estimateMinStopPr(stopPrs)) ;
+
+        for (double minStopPr = minEps; minStopPr <= maxEps+epsStep; minStopPr+=epsStep) {
             STStopTrajectory stopTraj = algo.toStopTrajectory(traj, stopPrs, minStopPr);
             stats.calculateStats(traj, stopTraj);
-            System.out.println(stopVariance + "," + minStopPr + "," + searchRadius + "," + stats.getMCC());
+            System.out.println(
+                    minStopPr + "," +
+                    stats.getTruePositiveRate() + "," +
+                    stats.getTrueNegativeRate() + "," +
+                    stats.getFalsePositiveRate() + "," +
+                    stats.getFalseNegativeRate() + "," +
+                    stats.getMCC());
         }
     }
 

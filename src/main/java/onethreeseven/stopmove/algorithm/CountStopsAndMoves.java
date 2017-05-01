@@ -20,6 +20,7 @@ public class CountStopsAndMoves {
     private int nMoveEpisodes = 0;
     private int nStopEpisodes = 0;
     private long durationSeconds = 0;
+    private long intervalSeconds = 0L;
 
     /**
      * @param traj A stop/move annotated spatio-temporal trajectory.
@@ -31,6 +32,7 @@ public class CountStopsAndMoves {
         nMoveEpisodes = 0;
 
         boolean isStopped = false;
+        STStopPt prevPt = null;
         for (STStopPt pt : traj) {
             if(pt.isStopped()){
                 nStops++;
@@ -46,11 +48,22 @@ public class CountStopsAndMoves {
                     nMoveEpisodes++;
                 }
             }
+            if(prevPt != null){
+                intervalSeconds += ChronoUnit.SECONDS.between(prevPt.getTime(), pt.getTime());
+            }
+            prevPt = pt;
         }
 
         durationSeconds = ChronoUnit.SECONDS.between(
                 traj.getTime(0),
                 traj.getTime(traj.size()-1));
+
+        intervalSeconds = Math.round(intervalSeconds/(double)traj.size()-1);
+
+    }
+
+    public long getIntervalSeconds(){
+        return intervalSeconds;
     }
 
     public int getnStops() {

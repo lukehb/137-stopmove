@@ -10,6 +10,7 @@ import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.geo.projection.ProjectionEquirectangular;
 import onethreeseven.stopmove.algorithm.CBSMoT;
 import onethreeseven.stopmove.algorithm.POSMIT;
+import onethreeseven.stopmove.algorithm.SMoT;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
@@ -22,17 +23,18 @@ import java.util.concurrent.TimeUnit;
  * different data-sets.
  * @author Luke Bermingham
  */
-public class RunningTimeRealPOSMITvsCBSMoT {
+public class RunningTimeRealStopClassifiers {
 
 
     private static final POSMIT algoPOSMIT = new POSMIT();
     private static final CBSMoT algoCBSMOT = new CBSMoT();
+    private static final SMoT algoSMOT = new SMoT();
     private static final int nRuns = 50;
-    private static final double spatialParam = 0.185;
-    private static final int indexSearchRadius = 2;
-    private static final long minTimeMillis = 2000L;
-    private static final double minStopPr = 0.8;
-    private static final String filename = "dog_walk";
+    private static final double spatialParam = 2.922;
+    private static final int indexSearchRadius = 1;
+    private static final long minTimeMillis = 20000L;
+    private static final double minStopPr = 0.55;
+    private static final String filename = "38092";
 
     private static final File inFile = new File(FileUtil.makeAppDir("traj"), filename + ".txt");
 
@@ -56,10 +58,11 @@ public class RunningTimeRealPOSMITvsCBSMoT {
                 " indexSearchRadius = " + indexSearchRadius +
                 " nRuns = " + nRuns);
 
-        System.out.println("POSMIT(ms),CB-SMoT(ms)");
+        System.out.println("POSMIT(ms),CB-SMoT(ms),SMoT(ms)");
 
         double avgRunTimePOSMIT = 0;
         double avgRunTimeCBSMOT = 0;
+        double avgRunTimeSMOT = 0;
 
         for (int i = 0; i < nRuns; i++) {
             //posmit
@@ -73,12 +76,19 @@ public class RunningTimeRealPOSMITvsCBSMoT {
             algoCBSMOT.run(traj, spatialParam, minTimeMillis);
             runningTimeCBSMOT = (bean.getCurrentThreadUserTime() - runningTimeCBSMOT);
             avgRunTimeCBSMOT += runningTimeCBSMOT;
+
+            //cbsmot
+            long runningTimeSMOT = bean.getCurrentThreadUserTime();
+            algoSMOT.run(traj, spatialParam, minTimeMillis);
+            runningTimeSMOT = (bean.getCurrentThreadUserTime() - runningTimeSMOT);
+            avgRunTimeSMOT += runningTimeSMOT;
         }
 
         avgRunTimePOSMIT = TimeUnit.NANOSECONDS.toMillis((long) avgRunTimePOSMIT) / (double)nRuns;
         avgRunTimeCBSMOT = TimeUnit.NANOSECONDS.toMillis((long) avgRunTimeCBSMOT) / (double)nRuns;
+        avgRunTimeSMOT = TimeUnit.NANOSECONDS.toMillis((long) avgRunTimeSMOT) / (double)nRuns;
 
-        System.out.println(avgRunTimePOSMIT + "," + avgRunTimeCBSMOT);
+        System.out.println(avgRunTimePOSMIT + "," + avgRunTimeCBSMOT + "," + avgRunTimeSMOT);
 
     }
 

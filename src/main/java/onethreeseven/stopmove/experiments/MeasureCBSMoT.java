@@ -9,8 +9,8 @@ import onethreeseven.datastructures.data.resolver.TemporalFieldResolver;
 import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.geo.projection.AbstractGeographicProjection;
 import onethreeseven.geo.projection.ProjectionEquirectangular;
+import onethreeseven.stopmove.algorithm.CBSMoT;
 import onethreeseven.stopmove.algorithm.POSMIT;
-import onethreeseven.stopmove.algorithm.SMoT;
 import onethreeseven.stopmove.algorithm.StopClassificationStats;
 
 import java.io.File;
@@ -24,13 +24,13 @@ import java.util.Map;
  * this affect the classification.
  * @author Luke Bermingham
  */
-public class MeasureSMoT {
+public class MeasureCBSMoT {
 
     private static final String filename = "ferry";
     private static final File inFile = new File(FileUtil.makeAppDir("traj"), filename + ".txt");
     private static final AbstractGeographicProjection projection = new ProjectionEquirectangular();
 
-    private static final boolean testRegionSize = true;
+    private static final boolean testSpatialParameter = true;
 
 
     public static void main(String[] args) {
@@ -44,28 +44,28 @@ public class MeasureSMoT {
                 new StopFieldResolver(4),
                 true).parse(inFile);
 
-        if(testRegionSize){
-            final double minRegionSize = 0.1;
-            final double maxRegionSize = 20;
-            final double regionStepSize = 0.1;
+        if(testSpatialParameter){
+            final double minSpatialEps = 0;
+            final double maxSpatialEps = 20;
+            final double spatialEpsStepSize = 0.1;
             final long minTimeMillis = 21000;
             for (STStopTrajectory traj : trajMap.values()) {
-                testRegionSize(traj, minRegionSize, maxRegionSize, regionStepSize, minTimeMillis);
+                testSpatialParameter(traj, minSpatialEps, maxSpatialEps, spatialEpsStepSize, minTimeMillis);
             }
         }
     }
 
 
-    private static void testRegionSize(STStopTrajectory traj, double minRegionSize, double maxRegionSize,
-                                       double regionSizeStep, long minTimeMillis){
+    private static void testSpatialParameter(STStopTrajectory traj, double minEpsSize, double maxEpsSize,
+                                             double epsStepSize, long minTimeMillis){
         System.out.println("Test where we vary the region size parameter.");
         System.out.println("Stop time(ms): " + minTimeMillis);
-        System.out.println("Region Size, Stop Time (ms), MCC");
+        System.out.println("Spatial Parameter (m), Stop Time (ms), MCC");
 
         final StopClassificationStats stats = new StopClassificationStats();
-        final SMoT algo = new SMoT();
+        final CBSMoT algo = new CBSMoT();
 
-        for (double regionSize = minRegionSize; regionSize <= maxRegionSize; regionSize+=regionSizeStep) {
+        for (double regionSize = minEpsSize; regionSize <= maxEpsSize; regionSize+=epsStepSize) {
             STStopTrajectory stopTraj = algo.run(traj, regionSize, minTimeMillis);
             stats.calculateStats(traj, stopTraj);
             System.out.println(regionSize + "," + minTimeMillis +  "," + stats.getMCC());

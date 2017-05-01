@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class StopMoveTrajStats {
 
-    private static final File trajFile = new File(FileUtil.makeAppDir("traj"), "dog_walk.txt");
+    private static final File trajFile = new File(FileUtil.makeAppDir("traj"), "38092.txt");
     private static final CountStopsAndMoves statsAlgo = new CountStopsAndMoves();
 
     public static void main(String[] args) {
@@ -42,7 +42,8 @@ public class StopMoveTrajStats {
                             "\n#Moves = " + statsAlgo.getnMoves() +
                             "\nnStopEpisodes = " + statsAlgo.getnStopEpisodes() +
                             "\nnMoveEpisodes = " + statsAlgo.getnMoveEpisodes() +
-                            "\nduration (s) = " + statsAlgo.getDurationSeconds()
+                            "\nduration (s) = " + statsAlgo.getDurationSeconds() +
+                            "\ninterval (s) = " + statsAlgo.getIntervalSeconds()
             );
         }
     }

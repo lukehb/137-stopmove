@@ -129,6 +129,14 @@ public class StopClassificationStats {
         return trueNegativeRate;
     }
 
+    public double getFalsePositiveRate() {
+        return falsePositiveRate;
+    }
+
+    public double getFalseNegativeRate() {
+        return falseNegativeRate;
+    }
+
     public double getAccuracy() {
         return accuracy;
     }

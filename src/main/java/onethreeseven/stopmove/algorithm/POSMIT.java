@@ -64,8 +64,9 @@ public class POSMIT {
             displacements[i] = traj.getEuclideanDistance(i-1, i);
         }
 
-        //we assume actual stops are happening somewhere between 0 and 20 meters per second
+        //we assume actual stops are happening somewhere between 0 and 20 meters per entry
         displacements = Arrays.stream(displacements).filter(value -> value > 0 && value < 20).sorted().toArray();
+        //displacements = Arrays.stream(displacements).sorted().toArray();
         return new Kneedle().run(displacements);
     }
 
