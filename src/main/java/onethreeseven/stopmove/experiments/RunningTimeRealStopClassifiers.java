@@ -30,11 +30,11 @@ public class RunningTimeRealStopClassifiers {
     private static final CBSMoT algoCBSMOT = new CBSMoT();
     private static final SMoT algoSMOT = new SMoT();
     private static final int nRuns = 50;
-    private static final double spatialParam = 2.922;
+    private static final double spatialParam = 8.6;
     private static final int indexSearchRadius = 1;
     private static final long minTimeMillis = 20000L;
-    private static final double minStopPr = 0.55;
-    private static final String filename = "38092";
+    private static final double minStopPr = 0.5;
+    private static final String filename = "ferry";
 
     private static final File inFile = new File(FileUtil.makeAppDir("traj"), filename + ".txt");
 
@@ -77,7 +77,7 @@ public class RunningTimeRealStopClassifiers {
             runningTimeCBSMOT = (bean.getCurrentThreadUserTime() - runningTimeCBSMOT);
             avgRunTimeCBSMOT += runningTimeCBSMOT;
 
-            //cbsmot
+            //smot
             long runningTimeSMOT = bean.getCurrentThreadUserTime();
             algoSMOT.run(traj, spatialParam, minTimeMillis);
             runningTimeSMOT = (bean.getCurrentThreadUserTime() - runningTimeSMOT);
