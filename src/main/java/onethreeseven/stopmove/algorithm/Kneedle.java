@@ -5,7 +5,7 @@ import static onethreeseven.stopmove.algorithm.Maths2.gaussianSmooth;
 
 /**
  * Given set of values look for the elbow/knee points.
- * See paper: "Finding a “Kneedle” in a Haystack: Detecting Knee Points in System Behavior"
+ * See paper: "Finding a Kneedle in a Haystack: Detecting Knee Points in System Behavior"
  * @author Luke Bermingham
  */
 public class Kneedle {
@@ -87,6 +87,9 @@ public class Kneedle {
 
 
     public double run(double[] data){
+        if(data.length <= 1){
+            return 0;
+        }
         double[] normalisedData = prepare(gaussianSmooth(data, 3));
         int elbowIdx = findElbowIndex(normalisedData);
         return data[elbowIdx];
@@ -98,7 +101,7 @@ public class Kneedle {
      * and end data points in the sorted data. Each point in the data is the projected
      * onto this line, and the point with the biggest euclidean distance is considered
      * the most likely elbow.
-     * See paper: "Finding a “Kneedle” in a Haystack: Detecting Knee Points in System Behavior"
+     * See paper: "Finding a Kneedle in a Haystack: Detecting Knee Points in System Behavior"
      * for more details.
      * @param data The data to find an elbow in.
      * @param s How many "flat" points to require before we consider it a knee/elbow.

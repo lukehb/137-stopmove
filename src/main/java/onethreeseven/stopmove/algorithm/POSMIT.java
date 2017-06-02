@@ -58,16 +58,30 @@ public class POSMIT {
         return c1Max + ((c2Min - c1Max) * 0.5);
     }
 
-    public double estimateStopVariance(SpatioCompositeTrajectory<? extends STPt> traj){
+    /**
+     * Finds the a reasonable displacement value between the entries within a true "stop" episode.
+     * @param traj The trajectory to analyse.
+     * @param maxStopVariance The maximum stop variance, displacements above this definitely are not noisy stops
+     *                        - they are moves.
+     * @return The estimated stop variance value. A value of zero is returned if there was no reasonable estimation
+     * that could be made.
+     */
+    public double estimateStopVariance(SpatioCompositeTrajectory<? extends STPt> traj, int maxStopVariance){
         double[] displacements = new double[traj.size()-1];
         for (int i = 1; i < traj.size()-1; i++) {
             displacements[i] = traj.getEuclideanDistance(i-1, i);
         }
 
         //we assume actual stops are happening somewhere between 0 and 20 meters per entry
-        displacements = Arrays.stream(displacements).filter(value -> value > 0 && value < 20).sorted().toArray();
-        //displacements = Arrays.stream(displacements).sorted().toArray();
-        return new Kneedle().run(displacements);
+        displacements = Arrays.stream(displacements).filter(value -> value > 0 && value < maxStopVariance).sorted().toArray();
+        if(displacements.length > 1){
+            return new Kneedle().run(displacements);
+        }
+        return 0;
+    }
+
+    public double estimateStopVariance(SpatioCompositeTrajectory<? extends STPt> traj){
+        return estimateStopVariance(traj, 20);
     }
 
     public double[] run(SpatioCompositeTrajectory<? extends STPt> stTraj, int nSearchRadius){

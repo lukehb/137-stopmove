@@ -12,7 +12,7 @@ buildscript {
 apply plugin: 'com.jfrog.bintray'
 
 group 'onethreeseven'
-version '0.0.3'
+version '0.0.4'
 
 apply plugin: 'java'
 
@@ -53,8 +53,14 @@ task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
 }
 
+task javadocJar(type: Jar, dependsOn: 'javadoc') {
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+}
+
 artifacts {
     archives sourcesJar
+    archives javadocJar
 }
 
 publishing {
@@ -64,8 +70,8 @@ publishing {
             groupId group
             artifactId project.name
             version version
-
-            Artifact sourcesJar
+            artifact sourcesJar
+            artifact javadocJar
         }
     }
 }
