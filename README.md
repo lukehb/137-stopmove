@@ -55,7 +55,7 @@ repositories {
 }
 
 dependencies {
-    compile 'onethreeseven:stopmove:0.0.2'
+    compile 'onethreeseven:stopmove:0.0.3'
 }
 ```
 
