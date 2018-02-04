@@ -2,7 +2,7 @@
 Algorithms to automatically discover stops and moves in GPS trajectories.
 
 ## Algorithms
-* **POSMIT** - Probability of Stops and Moves in Trajectories. Uses a probabilistic approach to determine if a given entry in the trajectory is stopping or moving. Unlike traditional approaches POSMIT gives the user a quantifiable accuracy in regards to the classifications of each stop/move.
+* **POSMIT** - Probability of Stops and Moves in Trajectories. Uses a probabilistic approach to determine if a given entry in the trajectory is stopping or moving. Unlike traditional approaches POSMIT allows the user filter out low probability stops using the minimum stop probability parameter. Also, POSMIT comes with some heuristics to estimate its parameters.
 * **CB-SMoT** - Clustering-based Stop and Moves of Trajectories. Uses a modified DB-SCAN algorithm to find stops. 
 * **SMoT** - Stops and Moves of Trajectories. Uses predefined regions to search for a minimum duration stay within those region. Unlike the original algorithm our implementation creates these regions by divided up the studying region into uniform cells. The original algorithms calls for the author to pass in interesting regions.
 
@@ -42,7 +42,7 @@ long minTimeMillis = 3000L;
 //run the CB-SMoT algorithm
 STStopTrajectory outTraj = new CBSMoT().run(traj, epsMeters, minTimeMillis);
 ```
-*Note: see [`FindStopsCBSmot.java`](https://github.com/lukehb/137-stopmove/blob/master/src/main/java/onethreeseven/stopmove/experiments/FindStopsCBSmot.java) for a full example.
+*Note: see [`FindStopsCBSmot.java`](https://github.com/lukehb/137-stopmove/blob/master/src/main/java/onethreeseven/stopmove/experiments/FindStopCBSMoT.java) for a full example.
 
 ## Working with the source
 The source is licensed under the MIT licsense so feel free to use it in your projects. It does have some dependencies which are listed in the build.gradle file. The easiest use-case is setting the source up as a gradle project and letting gradle grab those dependencies for you. Next easiest is maven, though you will have translate the dependencies yourself.
@@ -55,7 +55,7 @@ repositories {
 }
 
 dependencies {
-    compile 'onethreeseven:stopmove:0.0.3'
+    compile 'onethreeseven:stopmove:0.0.4'
 }
 ```
 
