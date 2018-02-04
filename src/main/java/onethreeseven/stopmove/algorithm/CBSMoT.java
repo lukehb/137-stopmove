@@ -19,7 +19,10 @@ public class CBSMoT {
 
     /**
      * Classifies each point in the trajectory as either being a stop or a move
-     * depending on its so-called "linear neighbourhood" (as defined by eps and min-time).
+     * depending on its so-called "linear neighbourhood" (as defined by a spatial parameter, eps)
+     * and the minimum duration of the cluster that is formed by expanding this neighbourhood.
+     * In their original paper the authors differentiate between known and unknown stops; we
+     * make a modification in this implementation as we are only interested in the unknown stops.
      * @param traj The trajectory whose points will be classified.
      * @param epsMeters How close points must be to each other to be considered neighbours.
      * @param minTimeMillis A neighbourhood of points must last at least this long to be considered stop.
@@ -51,6 +54,7 @@ public class CBSMoT {
                 if(hoodSize <= 0){continue;}
             }
             //grow the neighbourhood at the extremes
+            //note: growing at the extremes is a slight optimisation over the original
             boolean[] lrCanGrow = new boolean[]{true, true};
             while(lrCanGrow[0] || lrCanGrow[1]){
                 for (int i = 0; i < 2; i++) {
@@ -84,8 +88,10 @@ public class CBSMoT {
 
     private int[] getNeighbourhood(SpatioCompositeTrajectory traj, int idx, double epsMeters){
         final int[] lrIndices = new int[]{idx,idx};
+        //we do epsilon check in both directions so store sum of distance in both directions from idx
         final double[] sumDists = new double[]{0,0};
         final int lastIdx = traj.size()-1;
+        //boolean array indicating if we can keep expanding indices left or right
         final boolean[] lrCanProceed = new boolean[]{idx-1 >= 0, idx + 1 <= lastIdx};
         //while we can proceed indices either left or right, do so
         while(lrCanProceed[0] || lrCanProceed[1]){

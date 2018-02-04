@@ -97,13 +97,21 @@ public class SMoT {
 
             boolean endRegionVisit = true;
             LatLonBounds entryRegion = getEnvelopingRegion(regions, lat, lon);
+
+            if(entryRegion == null){
+                //if this happens probably need to do region calculation wholly in Euclidean space
+                output.addGeographic(traj.getCoords(i, false), new TimeAndStop(traj.get(i).getTime(), false));
+                continue;
+            }
+
+
             //we have one or more points in the same region
-            if(currentRegion != null && entryRegion != null && currentRegion.contains(entryRegion)){
+            if(currentRegion != null && currentRegion.contains(entryRegion)){
                 exitIdx = i;
                 endRegionVisit = (i == traj.size()-1);
             }
             //we have a new region for the first time
-            else if(currentRegion == null && entryRegion != null){
+            else if(currentRegion == null){
                 enterIdx = i;
                 exitIdx = i;
                 currentRegion = entryRegion;
@@ -121,7 +129,7 @@ public class SMoT {
                 }
 
                 //re-do the current index using its own region
-                if(currentRegion != null && entryRegion != null && !currentRegion.contains(entryRegion)){
+                if(!currentRegion.contains(entryRegion)){
                     i--;
                 }
 

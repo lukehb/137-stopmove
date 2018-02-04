@@ -1,6 +1,7 @@
 package onethreeseven.stopmove.algorithm;
 
 import java.util.ArrayList;
+
 import static onethreeseven.stopmove.algorithm.Maths2.gaussianSmooth;
 
 /**
@@ -16,14 +17,14 @@ public class Kneedle {
      * @param findMinima If true find local minimums, else find local maximums.
      * @return A list of the indices that have local minimum or maximum values.
      */
-    private ArrayList<Integer> findCandidateIndices(double[] data, boolean findMinima){
+    private ArrayList<Integer> findCandidateIndices(double[][] data, boolean findMinima){
         ArrayList<Integer> candidates = new ArrayList<>();
-        //an index is considered a candidate if both of its adjacent indices are
-        //greater or less (depending on whether we want local minima or local maxima)
+        //a coordinate is considered a candidate if both of its adjacent points have y-values
+        //that are greater or less (depending on whether we want local minima or local maxima)
         for (int i = 1; i < data.length - 1; i++) {
-            double prev = data[i-1];
-            double cur = data[i];
-            double next = data[i+1];
+            double prev = data[i-1][1];
+            double cur = data[i][1];
+            double next = data[i+1][1];
             boolean isCandidate = (findMinima) ? (prev > cur && next > cur) : (prev < cur && next < cur);
             if(isCandidate){
                 candidates.add(i);
@@ -53,44 +54,56 @@ public class Kneedle {
     }
 
     /**
-     * In this step we prepare the data by normalising into unit range 0-1
-     * and also subtracting the value from its normalised index value.
+     * Prepares the data by smoothing, then normalising into unit range 0-1,
+     * and finally, subtracting the y-value from the x-value.
      * @param data The data to prepare.
+     * @param smoothingWindow Size of the smoothing window.
      * @return The normalised data.
      */
-    private double[] prepare(double[] data){
+    private double[][] prepare(double[][] data, int smoothingWindow){
 
-        //find min and max value
-        double curMin = Double.POSITIVE_INFINITY;
-        double curMax = Double.NEGATIVE_INFINITY;
-        for (double v : data) {
-            if(v < curMin){
-                curMin = v;
-            }
-            if(v > curMax){
-                curMax = v;
-            }
-        }
+        //smooth the data to make local minimum/maximum easier to find (this is Step 1 in the paper)
+        double[][] smoothedData = Maths2.gaussianSmooth2d(data, smoothingWindow);
 
-        //normalise the data using min-max normalisation
-        //and also subtract each value from its normalised index
-        final double range = curMax - curMin;
-        double[] normalisedData = new double[data.length];
+        //prepare the data into the unit range (step 2 of paper)
+        double[][] normalisedData = Maths2.minmaxNormalise(smoothedData);
 
+        //subtract normalised x from normalised y (this is step 3 in the paper)
         for (int i = 0; i < normalisedData.length; i++) {
-            double normalisedIndex = (double)i / data.length;
-            normalisedData[i] = ((data[i] - curMin) / range) - normalisedIndex;
+            normalisedData[i][1] = normalisedData[i][1] - normalisedData[i][0];
         }
+
         return normalisedData;
     }
 
+    private double computeAverageVarianceX(double[][] data){
+        int sumVariance = 0;
+        for (int i = 0; i < data.length - 1; i++) {
+            sumVariance += data[i + 1][0] - data[i][0];
+        }
+        return sumVariance / (data.length - 1);
+    }
 
-
-    public double run(double[] data){
+    /**
+     * Uses a heuristic to find what may be an elbow in the 1d data.
+     * This method is a heuristic so it may return in invalid elbow.
+     * If you need guarantees use the other method {@link Kneedle#run(double[][], double, int, boolean)}
+     * @param data The
+     * @return A possible elbow for this 1d data.
+     */
+    public double findElbowQuick(double[] data){
         if(data.length <= 1){
             return 0;
         }
-        double[] normalisedData = prepare(gaussianSmooth(data, 3));
+
+        double[] normalisedData = Maths2.minmaxNormalise1d(gaussianSmooth(data, 3));
+
+        //do kneedle y'-x' (in this case x' is normalised index value)
+        for (int i = 0; i < normalisedData.length; i++) {
+            double normalisedIndex = (double)i / data.length;
+            normalisedData[i] = normalisedData[i] - normalisedIndex;
+        }
+
         int elbowIdx = findElbowIndex(normalisedData);
         return data[elbowIdx];
     }
@@ -103,35 +116,44 @@ public class Kneedle {
      * the most likely elbow.
      * See paper: "Finding a Kneedle in a Haystack: Detecting Knee Points in System Behavior"
      * for more details.
-     * @param data The data to find an elbow in.
+     * @param data The 2d data to find an elbow in.
      * @param s How many "flat" points to require before we consider it a knee/elbow.
+     * @param smoothingWindow The data is smoothed using Gaussian kernel average smoother, this parameter is the window used for averaging
+     *                        (higher values mean more smoothing, try 3 to begin with).
      * @param findElbows Whether to find elbows or knees.
      * @return The elbow or knee values.
      */
-    public ArrayList<Double> run(double[] data, double s, boolean findElbows){
-        ArrayList<Double> localMinMaxPts = new ArrayList<>();
-        //smooth the data to make local minimum/maximum easier to find (this is Step 1 in the paper)
-        double[] smoothedData = gaussianSmooth(data, 3);
-        //prepare the data into the unit range and subtract normalised index (this is step 2 & 3 in the paper)
-        double[] normalisedData = prepare(smoothedData);
+    public ArrayList<double[]> run(double[][] data, double s, int smoothingWindow, boolean findElbows){
+
+        if(data.length == 0){
+            throw new IllegalArgumentException("Cannot find elbow or knee points in empty data.");
+        }
+        if(data[0].length != 2){
+            throw new IllegalArgumentException("Cannot run Kneedle, this method expects all data to be 2d.");
+        }
+
+        ArrayList<double[]> localMinMaxPts = new ArrayList<>();
+        //do steps 1,2,3 of the paper in the prepare method
+        double[][] normalisedData = prepare(data, smoothingWindow);
         //find candidate indices (this is step 4 in the paper)
         {
             ArrayList<Integer> candidateIndices = findCandidateIndices(normalisedData, findElbows);
             //go through each candidate index, i, and see if the indices after i are satisfy the threshold requirement
             //(this is step 5 in the paper)
-            double step = 1.0/data.length;
+            double step = computeAverageVarianceX(normalisedData);
             step = findElbows ? step * s : step * -s;
 
             //check each candidate to see if it is a real elbow/knee
+            //(this is step 6 in the paper)
             for (int i = 0; i < candidateIndices.size(); i++) {
                 Integer candidateIdx = candidateIndices.get(i);
                 Integer endIdx = (i + 1 < candidateIndices.size()) ? candidateIndices.get(i+1) : data.length;
 
-                double threshold = normalisedData[candidateIdx] + step;
+                double threshold = normalisedData[candidateIdx][1] + step;
 
                 for (int j = candidateIdx + 1; j < endIdx; j++) {
                     boolean isRealElbowOrKnee = (findElbows) ?
-                            normalisedData[j] > threshold : normalisedData[j] < threshold;
+                            normalisedData[j][1] > threshold : normalisedData[j][1] < threshold;
                     if(isRealElbowOrKnee) {
                         localMinMaxPts.add(data[candidateIdx]);
                         break;
@@ -141,5 +163,7 @@ public class Kneedle {
         }
         return localMinMaxPts;
     }
+
+
 
 }

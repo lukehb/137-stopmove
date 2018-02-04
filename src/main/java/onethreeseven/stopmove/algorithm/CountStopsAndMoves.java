@@ -21,6 +21,9 @@ public class CountStopsAndMoves {
     private int nStopEpisodes = 0;
     private long durationSeconds = 0;
     private long intervalSeconds = 0L;
+    private long minIntervalSeconds = 0L;
+    private long maxIntervalSeconds = 0L;
+    private long modalSamplingRate = 0L;
 
     /**
      * @param traj A stop/move annotated spatio-temporal trajectory.
@@ -30,10 +33,15 @@ public class CountStopsAndMoves {
         nMoves = 0;
         nStopEpisodes = 0;
         nMoveEpisodes = 0;
+        minIntervalSeconds = Long.MAX_VALUE;
+
+
+        double[] deltaTimes = new double[traj.size()-1];
 
         boolean isStopped = false;
         STStopPt prevPt = null;
-        for (STStopPt pt : traj) {
+        for (int i = 0; i < traj.size(); i++) {
+            STStopPt pt = traj.get(i);
             if(pt.isStopped()){
                 nStops++;
                 if(!isStopped){
@@ -49,7 +57,15 @@ public class CountStopsAndMoves {
                 }
             }
             if(prevPt != null){
-                intervalSeconds += ChronoUnit.SECONDS.between(prevPt.getTime(), pt.getTime());
+                long deltaSeconds = ChronoUnit.SECONDS.between(prevPt.getTime(), pt.getTime());
+                deltaTimes[i-1] = deltaSeconds;
+                intervalSeconds += deltaSeconds;
+                if(deltaSeconds < minIntervalSeconds){
+                    minIntervalSeconds = deltaSeconds;
+                }
+                if(deltaSeconds > maxIntervalSeconds){
+                    maxIntervalSeconds = deltaSeconds;
+                }
             }
             prevPt = pt;
         }
@@ -57,6 +73,8 @@ public class CountStopsAndMoves {
         durationSeconds = ChronoUnit.SECONDS.between(
                 traj.getTime(0),
                 traj.getTime(traj.size()-1));
+
+        modalSamplingRate = (long) Maths2.mode(deltaTimes);
 
         intervalSeconds = Math.round(intervalSeconds/(double)traj.size()-1);
 
@@ -84,5 +102,17 @@ public class CountStopsAndMoves {
 
     public long getDurationSeconds() {
         return durationSeconds;
+    }
+
+    public long getMinIntervalSeconds() {
+        return minIntervalSeconds;
+    }
+
+    public long getMaxIntervalSeconds() {
+        return maxIntervalSeconds;
+    }
+
+    public long getModalSamplingSeconds() {
+        return modalSamplingRate;
     }
 }

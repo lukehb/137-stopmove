@@ -24,14 +24,22 @@ import java.util.Map;
  */
 public class MeasurePOSMIT {
 
-    private static final String filename = "38092";
+    //private static final String filename = "ferry";
+    //private static final String filename = "hike";
+    //private static final String filename = "shopping_trip";
+    //private static final String filename = "bus_a_33320";
+    //private static final String filename = "bus_b_33424";
+    private static final String filename = "bus_c_38092";
+
     private static final File inFile = new File(FileUtil.makeAppDir("traj"), filename + ".txt");
     private static final AbstractGeographicProjection projection = new ProjectionEquirectangular();
 
     private static final boolean testStopVariance = false;
-    private static final boolean testSearchRadius = false;//true;
-    private static final boolean testMinStopPr = true;//true;
+    private static final boolean testSearchRadius = false;
+    private static final boolean testMinStopPr = true;
 
+    private static final POSMIT algo = new POSMIT();
+    private static final StopClassificationStats stats = new StopClassificationStats();
 
     public static void main(String[] args) {
 
@@ -45,56 +53,55 @@ public class MeasurePOSMIT {
                 true).parse(inFile);
 
         if(testStopVariance){
-            final double minStopVariance = 0;
+            final double minStopVariance = 1;
             final double maxStopVariance = 20;
-            final double stopVarianceStep = 0.1;
-            final int searchRadius = 21;
-            final double minStopPr = 0.5;
+            final double stopVarianceStep = 1;
             for (STStopTrajectory traj : trajMap.values()) {
-                System.out.println("Estimated stop variance: " + new POSMIT().estimateStopVariance(traj));
+                double estimatedStopVariance = algo.estimateStopVariance(traj);
+                System.out.println("Estimated stop variance: " + estimatedStopVariance);
+                int estimatedSearchBandwidth = algo.estimateSearchRadius(traj, estimatedStopVariance);
+                System.out.println("Estimated search bandwidth: " + estimatedSearchBandwidth);
                 testStopVariance(traj, minStopVariance, maxStopVariance,
-                        stopVarianceStep, searchRadius, minStopPr);
+                        stopVarianceStep, estimatedSearchBandwidth);
             }
         }
         if(testMinStopPr){
             final double minEps = 0;
             final double maxEps = 1;
             final double epsStep = 0.05;
-            //final double stopVariance = 2.922;
-            final int searchRadius = 1;
             for (STStopTrajectory traj : trajMap.values()) {
-                double stopVariance = new POSMIT().estimateStopVariance(traj);
+                double stopVariance = algo.estimateStopVariance(traj);
+                int searchRadius = algo.estimateSearchRadius(traj, stopVariance);
                 testMinStopPr(traj, minEps, maxEps, epsStep, stopVariance, searchRadius);
             }
         }
         if(testSearchRadius){
             final int minSearchRadius = 1;
-            final int maxSearchRadius = 50;
-            //double stopVariance = 17.32;
-            final double minStopPr = 0.45;
-            for (STStopTrajectory trajectory : trajMap.values()) {
-                double stopVariance = new POSMIT().estimateStopVariance(trajectory);
 
-                System.out.println("Estimated search radius: " + new POSMIT().estimateSearchRadius(trajectory, stopVariance));
-                testSearchRadius(trajectory, minSearchRadius, maxSearchRadius, stopVariance, minStopPr);
+            for (STStopTrajectory trajectory : trajMap.values()) {
+
+                final int maxSearchRadius = Math.min(100, trajectory.size()/2);
+                double stopVariance = algo.estimateStopVariance(trajectory);
+
+                System.out.println("Estimated search radius: " + algo.estimateSearchRadius(trajectory, stopVariance));
+                testSearchRadius(trajectory, minSearchRadius, maxSearchRadius, stopVariance);
             }
         }
     }
 
-    private static void testMinStopPr(STStopTrajectory traj, double minEps, double maxEps,
-                                  double epsStep, double stopVariance, int searchRadius){
+    private static void testMinStopPr(STStopTrajectory traj, double minPr, double maxPr,
+                                  double prStep, double stopVariance, int searchRadius){
         System.out.println("Test where we vary the minStopPr (eps) parameter.");
         System.out.println("Search radius: " + searchRadius);
         System.out.println("Stop variance: " + stopVariance);
         System.out.println("Min Stop Pr, TP, TN, FP, FN, MCC");
 
         final StopClassificationStats stats = new StopClassificationStats();
-        final POSMIT algo = new POSMIT();
 
         double[] stopPrs = algo.run(traj, searchRadius, stopVariance);
         System.out.println("Estimated eps: " + algo.estimateMinStopPr(stopPrs)) ;
 
-        for (double minStopPr = minEps; minStopPr <= maxEps+epsStep; minStopPr+=epsStep) {
+        for (double minStopPr = minPr; minStopPr <= maxPr+prStep; minStopPr+=prStep) {
             STStopTrajectory stopTraj = algo.toStopTrajectory(traj, stopPrs, minStopPr);
             stats.calculateStats(traj, stopTraj);
             System.out.println(
@@ -108,40 +115,48 @@ public class MeasurePOSMIT {
     }
 
     private static void testStopVariance(STStopTrajectory traj, double minStopVariance, double maxStopVariance,
-                                  double stopVarianceStep, int searchRadius, double minStopPr){
+                                  double stopVarianceStep, int searchRadius){
         System.out.println("Test where we vary the stopVariance (h_d) parameter.");
         System.out.println("Search radius: " + searchRadius);
         System.out.println("Min stop variance: " + minStopVariance);
         System.out.println("Max stop variance: " + maxStopVariance);
-        System.out.println("Stop Variance, Min Stop Pr, Search Radius, MCC");
+        System.out.println("Stop Variance, POSMIT_MinStopPr_Est, POSMIT_MinStopPr_025, POSMIT_MinStopPr_050, POSMIT_MinStopPr_075");
 
-        final StopClassificationStats stats = new StopClassificationStats();
-        final POSMIT algo = new POSMIT();
 
         for (double stopVariance = minStopVariance; stopVariance <= maxStopVariance; stopVariance+=stopVarianceStep) {
-            double[] stopPrs = algo.run(traj, searchRadius, stopVariance);
-            STStopTrajectory stopTraj = algo.toStopTrajectory(traj, stopPrs, minStopPr);
-            stats.calculateStats(traj, stopTraj);
-            System.out.println(stopVariance + "," + minStopPr + "," + searchRadius + "," + stats.getMCC());
+            runThrough25To75MinStopPr(traj, searchRadius, stopVariance);
         }
     }
 
-    private static void testSearchRadius(STStopTrajectory traj, int minSearchRadius, int maxSearchRadius,
-                                  double stopVariance, double minStopPr){
+    private static void testSearchRadius(STStopTrajectory traj, int minSearchRadius, int maxSearchRadius, double stopVariance){
         System.out.println("Test where we vary the search radius (h_i) parameter.");
         System.out.println("Stop variance: " + stopVariance);
-        System.out.println("Min stop pr: " + minStopPr);
-        System.out.println("Stop Variance, Min Stop Pr, Search Radius, MCC");
-
-        final StopClassificationStats stats = new StopClassificationStats();
-        final POSMIT algo = new POSMIT();
+        System.out.println("h_i, POSMIT_MinStopPr_Est, POSMIT_MinStopPr_025, POSMIT_MinStopPr_050, POSMIT_MinStopPr_075");
 
         for (int searchRadius = minSearchRadius; searchRadius <= maxSearchRadius; searchRadius++) {
-            double[] stopPrs = algo.run(traj, searchRadius, stopVariance);
+            runThrough25To75MinStopPr(traj, searchRadius, stopVariance);
+        }
+    }
+
+    private static void runThrough25To75MinStopPr(STStopTrajectory traj, int searchRadius, double stopVariance){
+        double[] stopPrs = algo.run(traj, searchRadius, stopVariance);
+        System.out.print(stopVariance);
+
+        //estimate the minStopPr and print the stats for that
+        {
+            double estimatedMinStopPr = algo.estimateMinStopPr(stopPrs);
+            STStopTrajectory stopTraj = algo.toStopTrajectory(traj, stopPrs, estimatedMinStopPr);
+            stats.calculateStats(traj, stopTraj);
+            System.out.print("," + stats.getMCC());
+        }
+
+        for (double minStopPr = 0.25; minStopPr <= 0.75; minStopPr+=0.25) {
             STStopTrajectory stopTraj = algo.toStopTrajectory(traj, stopPrs, minStopPr);
             stats.calculateStats(traj, stopTraj);
-            System.out.println(stopVariance + "," + minStopPr + "," + searchRadius + "," + stats.getMCC());
+            System.out.print("," + stats.getMCC());
         }
+
+        System.out.print("\n");
     }
 
 }

@@ -25,6 +25,8 @@ allprojects {
         mavenLocal()
         //datastrcutures module hosted on bintray
         maven{url 'https://dl.bintray.com/lukehb/137-datastructures'}
+        maven{url 'https://dl.bintray.com/lukehb/137-common'}
+        maven{url 'https://dl.bintray.com/lukehb/137-geo'}
     }
     apply plugin: 'maven'
     apply plugin: 'maven-publish'

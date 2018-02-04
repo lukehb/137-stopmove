@@ -18,7 +18,14 @@ import java.util.Map;
  */
 public class StopMoveTrajStats {
 
-    private static final File trajFile = new File(FileUtil.makeAppDir("traj"), "38092.txt");
+    //private static final String filename = "ferry";
+    private static final String filename = "hike";
+    //private static final String filename = "shopping_trip";
+    //private static final String filename = "bus_a_33320";
+    //private static final String filename = "bus_b_33424";
+    //private static final String filename = "bus_c_38092";
+
+    private static final File trajFile = new File(FileUtil.makeAppDir("traj"), filename + ".txt");
     private static final CountStopsAndMoves statsAlgo = new CountStopsAndMoves();
 
     public static void main(String[] args) {
@@ -43,7 +50,10 @@ public class StopMoveTrajStats {
                             "\nnStopEpisodes = " + statsAlgo.getnStopEpisodes() +
                             "\nnMoveEpisodes = " + statsAlgo.getnMoveEpisodes() +
                             "\nduration (s) = " + statsAlgo.getDurationSeconds() +
-                            "\ninterval (s) = " + statsAlgo.getIntervalSeconds()
+                            "\ninterval (s) = " + statsAlgo.getIntervalSeconds() +
+                            "\nmin interval (s) = " + statsAlgo.getMinIntervalSeconds() +
+                            "\nmax interval (s) = " + statsAlgo.getMaxIntervalSeconds() +
+                            "\nmodal sampling rate (s) = " + statsAlgo.getModalSamplingSeconds()
             );
         }
     }

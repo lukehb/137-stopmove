@@ -44,7 +44,10 @@ public class POSMIT {
 
         }
 
-        //double searchRadius = new Kneedle().run(chunkSizes.stream().mapToDouble(Long::doubleValue).sorted().toArray());
+        if(chunkSizes.isEmpty()){
+            return 1;
+        }
+
         long searchRadius = Maths.mean(chunkSizes.stream().mapToLong(value -> value).toArray());
 
         searchRadius = Math.max(1, Math.round(searchRadius * 0.5d));
@@ -72,15 +75,15 @@ public class POSMIT {
             displacements[i] = traj.getEuclideanDistance(i-1, i);
         }
 
-        //we assume actual stops are happening somewhere between 0 and 20 meters per entry
         displacements = Arrays.stream(displacements).filter(value -> value > 0 && value < maxStopVariance).sorted().toArray();
         if(displacements.length > 1){
-            return new Kneedle().run(displacements);
+            return new Kneedle().findElbowQuick(displacements);
         }
         return 0;
     }
 
     public double estimateStopVariance(SpatioCompositeTrajectory<? extends STPt> traj){
+        //we assume actual stops are happening somewhere between 0 and 20 meters per entry
         return estimateStopVariance(traj, 20);
     }
 
@@ -168,6 +171,7 @@ public class POSMIT {
         }
         return sumWeights/sumIndexWeight;
     }
+
 
     private double score(double[] coordsA, double[] coordsB, double stopVariance){
         double displacementMeters = Maths.dist(coordsA, coordsB);
