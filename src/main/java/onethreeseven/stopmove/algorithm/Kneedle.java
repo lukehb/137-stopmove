@@ -110,10 +110,6 @@ public class Kneedle {
 
     /**
      * This algorithm finds the so-called elbow/knee in the data.
-     * It does this by sorting the data, then making a line between the start
-     * and end data points in the sorted data. Each point in the data is the projected
-     * onto this line, and the point with the biggest euclidean distance is considered
-     * the most likely elbow.
      * See paper: "Finding a Kneedle in a Haystack: Detecting Knee Points in System Behavior"
      * for more details.
      * @param data The 2d data to find an elbow in.
