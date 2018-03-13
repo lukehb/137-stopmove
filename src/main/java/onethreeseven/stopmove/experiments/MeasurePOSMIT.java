@@ -2,16 +2,14 @@ package onethreeseven.stopmove.experiments;
 
 import onethreeseven.common.util.FileUtil;
 import onethreeseven.datastructures.data.STStopTrajectoryParser;
-import onethreeseven.datastructures.data.resolver.IdFieldResolver;
-import onethreeseven.datastructures.data.resolver.NumericFieldsResolver;
-import onethreeseven.datastructures.data.resolver.StopFieldResolver;
-import onethreeseven.datastructures.data.resolver.TemporalFieldResolver;
+import onethreeseven.datastructures.data.resolver.*;
 import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.geo.projection.AbstractGeographicProjection;
 import onethreeseven.geo.projection.ProjectionEquirectangular;
 import onethreeseven.stopmove.algorithm.POSMIT;
 import onethreeseven.stopmove.algorithm.StopClassificationStats;
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -41,13 +39,14 @@ public class MeasurePOSMIT {
     private static final POSMIT algo = new POSMIT();
     private static final StopClassificationStats stats = new StopClassificationStats();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         System.out.println("Reading in st trajectories...");
         final Map<String, STStopTrajectory> trajMap = new STStopTrajectoryParser(
                 projection,
                 new IdFieldResolver(0),
-                new NumericFieldsResolver(1,2),
+                new LatFieldResolver(1),
+                new LonFieldResolver(2),
                 new TemporalFieldResolver(3),
                 new StopFieldResolver(4),
                 true).parse(inFile);

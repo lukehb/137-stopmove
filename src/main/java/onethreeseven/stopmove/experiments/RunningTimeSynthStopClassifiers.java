@@ -4,7 +4,7 @@ import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.datastructures.util.DataGeneratorUtil;
 import onethreeseven.stopmove.algorithm.CBSMoT;
 import onethreeseven.stopmove.algorithm.POSMIT;
-import onethreeseven.stopmove.algorithm.SMoT;
+import onethreeseven.stopmove.algorithm.GBSMoT;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 
@@ -17,7 +17,7 @@ public class RunningTimeSynthStopClassifiers {
 
     private static final POSMIT algoPOSMIT = new POSMIT();
     private static final CBSMoT algoCBSMOT = new CBSMoT();
-    private static final SMoT algoSMOT = new SMoT();
+    private static final GBSMoT ALGO_SMOT = new GBSMoT();
     private static final double startLat = -16.9186;
     private static final double startLon = 145.7781;
     private static final ThreadMXBean bean = ManagementFactory.getThreadMXBean();
@@ -52,7 +52,14 @@ public class RunningTimeSynthStopClassifiers {
 
             int nStops = nEntries/20;
             STStopTrajectory traj = DataGeneratorUtil.generateTrajectoryWithStops(
-                    nEntries, nStops, 1000L, 10, 0.3, startLat, startLon);
+                    nEntries,
+                    nStops,
+                    1000L,
+                    10000,
+                    20,
+                    0.3,
+                    startLat,
+                    startLon);
 
 
             final double spatialParam = algoPOSMIT.estimateStopVariance(traj);
@@ -85,7 +92,7 @@ public class RunningTimeSynthStopClassifiers {
             //time SMoT
             if(runSMOT){
                 long startingTimeSMOT = bean.getCurrentThreadUserTime();
-                algoSMOT.run(traj, spatialParam, 10000L);
+                ALGO_SMOT.run(traj, spatialParam, 10000L);
                 long runningTimeSMOT = (bean.getCurrentThreadUserTime() - startingTimeSMOT)/1000000L;
                 System.out.print(runningTimeSMOT + ",");
             }

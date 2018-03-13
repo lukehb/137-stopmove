@@ -2,16 +2,14 @@ package onethreeseven.stopmove.experiments;
 
 import onethreeseven.common.util.FileUtil;
 import onethreeseven.datastructures.data.STStopTrajectoryParser;
-import onethreeseven.datastructures.data.resolver.IdFieldResolver;
-import onethreeseven.datastructures.data.resolver.NumericFieldsResolver;
-import onethreeseven.datastructures.data.resolver.StopFieldResolver;
-import onethreeseven.datastructures.data.resolver.TemporalFieldResolver;
+import onethreeseven.datastructures.data.resolver.*;
 import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.geo.projection.AbstractGeographicProjection;
 import onethreeseven.geo.projection.ProjectionEquirectangular;
 import onethreeseven.stopmove.algorithm.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Map;
 
@@ -20,7 +18,7 @@ import java.util.Map;
  * of
  * {@link onethreeseven.stopmove.algorithm.POSMIT}
  * {@link onethreeseven.stopmove.algorithm.CBSMoT}
- * {@link onethreeseven.stopmove.algorithm.SMoT}
+ * {@link GBSMoT}
  * @author Luke Bermingham
  */
 public class VarySpatialParameters {
@@ -37,7 +35,7 @@ public class VarySpatialParameters {
 
     private static final POSMIT algoPOSMIT = new POSMIT();
     private static final CBSMoT algoCBSMOT = new CBSMoT();
-    private static final SMoT algoSMOT = new SMoT();
+    private static final GBSMoT ALGO_SMOT = new GBSMoT();
     private static final StopClassificationStats classificationStats = new StopClassificationStats();
     private static final CountStopsAndMoves datasetStats = new CountStopsAndMoves();
 
@@ -45,13 +43,14 @@ public class VarySpatialParameters {
     private static final double maxSpatialParam = 20;
     private static final double spatialParamStep = 1;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         System.out.println("Reading in st trajectories...");
         final Map<String, STStopTrajectory> trajMap = new STStopTrajectoryParser(
                 projection,
                 new IdFieldResolver(0),
-                new NumericFieldsResolver(1,2),
+                new LatFieldResolver(1),
+                new LonFieldResolver(2),
                 new TemporalFieldResolver(3),
                 new StopFieldResolver(4),
                 true).parse(inFile);
@@ -120,7 +119,7 @@ public class VarySpatialParameters {
             System.out.print(classificationStats.getMCC() + ",");
 
             //SMOT
-            classificationStats.calculateStats(traj, algoSMOT.run(traj, spatialParam, minStopTime));
+            classificationStats.calculateStats(traj, ALGO_SMOT.run(traj, spatialParam, minStopTime));
             System.out.print(classificationStats.getMCC());
 
             int paramDistance = (int) (Math.floor(spatialParam) - Math.floor(esimatedSpatialParam));

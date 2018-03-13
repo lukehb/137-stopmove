@@ -12,19 +12,19 @@ import java.util.Collection;
  * This algorithms finds stops in raw spatio-temporal trajectories.
  * It does this by checking if entries reside within known geographic
  * regions for a specified amount of time.
- * This algorithm is from:
+ * This algorithm is based on:
  * "A Model for Enriching Trajectories with Semantic Geographical Information"
  * @author Luke Bermingham
  */
-public class SMoT {
+public class GBSMoT {
 
-    public STStopTrajectory run(SpatioCompositeTrajectory<? extends STPt> traj,
+    public STStopTrajectory run(SpatioCompositeTrajectory traj,
                                 double regionSize, long minTimeMillis){
         Collection<LatLonBounds> regions = getRegions(traj, regionSize);
         return run(traj, regions, minTimeMillis);
     }
 
-    private Collection<LatLonBounds> getRegions(SpatioCompositeTrajectory<? extends STPt> traj, double regionSize){
+    private Collection<LatLonBounds> getRegions(SpatioCompositeTrajectory traj, double regionSize){
         final LatLonBounds studyRegion = traj.calculateGeoBounds();
         final AbstractGeographicProjection projection = traj.getProjection();
         final double[] bottomLeft = projection.geographicToCartesian(studyRegion.getMinLat(), studyRegion.getMinLon());
@@ -72,6 +72,18 @@ public class SMoT {
         return new int[]{x,y};
     }
 
+    private LocalDateTime getTime(SpatioCompositeTrajectory traj, int i){
+        CompositePt pt = traj.get(i);
+        LocalDateTime entryTime;
+        if(pt instanceof STPt){
+            entryTime = ((STPt) pt).getTime();
+        }
+        else{
+            entryTime = LocalDateTime.now();
+        }
+        return entryTime;
+    }
+
     /**
      * Labels contiguous portions of a trajectory as stops if they reside within
      * a region for at least a certain amount of time. Otherwise they are labelled as moves.
@@ -81,7 +93,7 @@ public class SMoT {
      *                      to be considered a stop.
      * @return A spatio-temporal trajectory labelled with stop and move annotations.
      */
-    public STStopTrajectory run(SpatioCompositeTrajectory<? extends STPt> traj,
+    public STStopTrajectory run(SpatioCompositeTrajectory traj,
                                 Collection<LatLonBounds> regions, long minTimeMillis){
 
         STStopTrajectory output = new STStopTrajectory(false, traj.getProjection());
@@ -100,7 +112,7 @@ public class SMoT {
 
             if(entryRegion == null){
                 //if this happens probably need to do region calculation wholly in Euclidean space
-                output.addGeographic(traj.getCoords(i, false), new TimeAndStop(traj.get(i).getTime(), false));
+                output.addGeographic(traj.getCoords(i, false), new TimeAndStop(getTime(traj, i), false));
                 continue;
             }
 
@@ -119,13 +131,13 @@ public class SMoT {
             }
             //we have the end of potential region visit, add the entries to the trajectory
             if(endRegionVisit){
-                LocalDateTime enterTime = traj.get(enterIdx).getTime();
-                LocalDateTime exitTime = traj.get(exitIdx).getTime();
+                LocalDateTime enterTime = getTime(traj, enterIdx);
+                LocalDateTime exitTime = getTime(traj, exitIdx);
                 long deltaMillis = ChronoUnit.MILLIS.between(enterTime, exitTime);
                 //this is the line that indicates whether these visiting entries were stopped or not
                 boolean wasStopped = deltaMillis >= minTimeMillis;
                 for (int j = enterIdx; j <= exitIdx; j++) {
-                    output.addGeographic(traj.getCoords(j, false), new TimeAndStop(traj.get(j).getTime(), wasStopped));
+                    output.addGeographic(traj.getCoords(j, false), new TimeAndStop(getTime(traj, j), wasStopped));
                 }
 
                 //re-do the current index using its own region

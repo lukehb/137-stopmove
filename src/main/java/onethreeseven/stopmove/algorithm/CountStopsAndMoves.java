@@ -1,8 +1,12 @@
 package onethreeseven.stopmove.algorithm;
 
+import onethreeseven.common.util.Maths;
 import onethreeseven.datastructures.model.STStopPt;
 import onethreeseven.datastructures.model.STStopTrajectory;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Compute some basic stats about Stop/Move Trajectories.
@@ -74,10 +78,23 @@ public class CountStopsAndMoves {
                 traj.getTime(0),
                 traj.getTime(traj.size()-1));
 
-        modalSamplingRate = (long) Maths2.mode(deltaTimes);
+        modalSamplingRate = (long) Maths.mode(deltaTimes);
 
         intervalSeconds = Math.round(intervalSeconds/(double)traj.size()-1);
 
+    }
+
+    public Map<String, String> getAllStats(){
+        Map<String, String> stats = new LinkedHashMap<>();
+        stats.put("Stops:", String.valueOf(nStops));
+        stats.put("Moves:", String.valueOf(nMoves));
+        stats.put("Stop episodes:", String.valueOf(nStopEpisodes));
+        stats.put("Move episodes:", String.valueOf(nMoveEpisodes));
+        stats.put("Trajectory duration(s):", String.valueOf(getDurationSeconds()));
+        stats.put("Minimum recording interval(s):", String.valueOf(getMinIntervalSeconds()));
+        stats.put("Maximum recording interval(s):", String.valueOf(getMaxIntervalSeconds()));
+        stats.put("Modal recording interval(s):", String.valueOf(getModalSamplingSeconds()));
+        return stats;
     }
 
     public long getIntervalSeconds(){

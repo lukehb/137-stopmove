@@ -1,14 +1,11 @@
 package onethreeseven.stopmove.algorithm;
 
 import onethreeseven.common.util.Maths;
-import onethreeseven.datastructures.model.STPt;
-import onethreeseven.datastructures.model.STStopTrajectory;
-import onethreeseven.datastructures.model.SpatioCompositeTrajectory;
-import onethreeseven.datastructures.model.TimeAndStop;
+import onethreeseven.datastructures.model.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.logging.Logger;
 
 /**
  * Probabilistic stop classifier
@@ -16,11 +13,9 @@ import java.util.logging.Logger;
  */
 public class POSMIT {
 
-    private static final Logger log = Logger.getLogger(POSMIT.class.getSimpleName());
-
     private static final double cutoff = Maths.gaussian(3, 1, 0, 1);
 
-    public int estimateSearchRadius(SpatioCompositeTrajectory<? extends STPt> traj, double stopVariance){
+    public int estimateSearchRadius(SpatioCompositeTrajectory traj, double stopVariance){
         ArrayList<Long> chunkSizes = new ArrayList<>();
 
         for (int i = 0; i < traj.size(); i++) {
@@ -69,7 +64,7 @@ public class POSMIT {
      * @return The estimated stop variance value. A value of zero is returned if there was no reasonable estimation
      * that could be made.
      */
-    public double estimateStopVariance(SpatioCompositeTrajectory<? extends STPt> traj, int maxStopVariance){
+    public double estimateStopVariance(SpatioCompositeTrajectory traj, int maxStopVariance){
         double[] displacements = new double[traj.size()-1];
         for (int i = 1; i < traj.size()-1; i++) {
             displacements[i] = traj.getEuclideanDistance(i-1, i);
@@ -82,12 +77,12 @@ public class POSMIT {
         return 0;
     }
 
-    public double estimateStopVariance(SpatioCompositeTrajectory<? extends STPt> traj){
+    public double estimateStopVariance(SpatioCompositeTrajectory traj){
         //we assume actual stops are happening somewhere between 0 and 20 meters per entry
         return estimateStopVariance(traj, 20);
     }
 
-    public double[] run(SpatioCompositeTrajectory<? extends STPt> stTraj, int nSearchRadius){
+    public double[] run(SpatioCompositeTrajectory stTraj, int nSearchRadius){
         return run(stTraj, nSearchRadius, estimateStopVariance(stTraj));
     }
 
@@ -98,7 +93,7 @@ public class POSMIT {
      * @param stopVariance The common speed variance within a stop (in meters per second).
      * @return A stop probability for each entry in the trajectory.
      */
-    public double[] run(SpatioCompositeTrajectory<? extends STPt> stTraj, int nSearchRadius, double stopVariance){
+    public double[] run(SpatioCompositeTrajectory stTraj, int nSearchRadius, double stopVariance){
 
         double[] stopProbabilities = new double[stTraj.size()];
 
@@ -119,19 +114,26 @@ public class POSMIT {
      *                a move.
      * @return spatio-temporal stop/move annotated trajectory.
      */
-    public STStopTrajectory toStopTrajectory(SpatioCompositeTrajectory<? extends STPt> traj,
+    public STStopTrajectory toStopTrajectory(SpatioCompositeTrajectory traj,
                                              double[] stopProbabilities, double minStopProbability){
         STStopTrajectory stopTraj = new STStopTrajectory(false, traj.getProjection());
 
         for (int i = 0; i < traj.size(); i++) {
             boolean isStopped = stopProbabilities[i] >= minStopProbability;
-            STPt time = traj.get(i);
-            stopTraj.addGeographic(traj.getCoords(i, false), new TimeAndStop(time.getTime(), isStopped));
+            CompositePt pt = traj.get(i);
+            LocalDateTime time;
+            if(pt instanceof STPt){
+                time = ((STPt) pt).getTime();
+            }else{
+                time = LocalDateTime.now();
+            }
+
+            stopTraj.addGeographic(traj.getCoords(i, false), new TimeAndStop(time, isStopped));
         }
         return stopTraj;
     }
 
-    private double getStopPr(SpatioCompositeTrajectory<? extends STPt> stTraj, int centerIdx,
+    private double getStopPr(SpatioCompositeTrajectory stTraj, int centerIdx,
                              int nSearchRadius, double stopVariance){
 
         final double[] centerCoords = stTraj.getCoords(centerIdx, true);

@@ -2,11 +2,8 @@ package onethreeseven.stopmove.experiments;
 
 import onethreeseven.common.util.FileUtil;
 import onethreeseven.datastructures.data.STStopTrajectoryParser;
-import onethreeseven.datastructures.data.SpatioCompositieTrajectoryWriter;
-import onethreeseven.datastructures.data.resolver.NumericFieldsResolver;
-import onethreeseven.datastructures.data.resolver.SameIdResolver;
-import onethreeseven.datastructures.data.resolver.StopFieldResolver;
-import onethreeseven.datastructures.data.resolver.TemporalFieldResolver;
+import onethreeseven.datastructures.data.SpatioCompositeTrajectoryWriter;
+import onethreeseven.datastructures.data.resolver.*;
 import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.datastructures.model.SpatioCompositeTrajectory;
 import onethreeseven.geo.projection.AbstractGeographicProjection;
@@ -14,6 +11,7 @@ import onethreeseven.geo.projection.ProjectionEquirectangular;
 import onethreeseven.stopmove.algorithm.CBSMoT;
 import onethreeseven.stopmove.algorithm.StopClassificationStats;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,12 +38,13 @@ public class FindStopCBSMoT {
     private static final boolean writeOutput = false;
     private static final StopClassificationStats stats = new StopClassificationStats();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         Map<String, STStopTrajectory> trajMap = new STStopTrajectoryParser(
                 projection,
                 new SameIdResolver("1"),
-                new NumericFieldsResolver(0,1),
+                new LatFieldResolver(0),
+                new LonFieldResolver(1),
                 new TemporalFieldResolver(2),
                 new StopFieldResolver(3),
                 true).parse(inFile);
@@ -78,7 +77,7 @@ public class FindStopCBSMoT {
             System.out.println("Converting to geographic");
             outMap.values().forEach(SpatioCompositeTrajectory::toGeographic);
             System.out.println("Preparing to write to file");
-            new SpatioCompositieTrajectoryWriter().write(outFile, outMap);
+            new SpatioCompositeTrajectoryWriter().write(outFile, outMap);
             System.out.println("Collect cb-smot stops at: " + outFile.getAbsolutePath());
         }
     }

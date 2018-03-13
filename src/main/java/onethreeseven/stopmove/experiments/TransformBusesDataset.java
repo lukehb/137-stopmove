@@ -3,10 +3,7 @@ package onethreeseven.stopmove.experiments;
 import onethreeseven.common.util.FileUtil;
 import onethreeseven.datastructures.data.STStopTrajectoryParser;
 import onethreeseven.datastructures.data.SpatioCompositeTrajectoryWriter;
-import onethreeseven.datastructures.data.resolver.IdFieldResolver;
-import onethreeseven.datastructures.data.resolver.NumericFieldsResolver;
-import onethreeseven.datastructures.data.resolver.StopFieldResolver;
-import onethreeseven.datastructures.data.resolver.TemporalFieldResolver;
+import onethreeseven.datastructures.data.resolver.*;
 import onethreeseven.datastructures.model.STStopPt;
 import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.geo.projection.ProjectionEquirectangular;
@@ -16,6 +13,7 @@ import onethreeseven.stopmove.algorithm.StopClassificationStats;
 import onethreeseven.stopmove.algorithm.UnivariateKMeans;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -54,14 +52,15 @@ public class TransformBusesDataset {
     private static final STStopTrajectoryParser busesParser = new STStopTrajectoryParser(
             new ProjectionEquirectangular(),
             new IdFieldResolver(12),
-            new NumericFieldsResolver(9, 8),
+            new LatFieldResolver(9),
+            new LonFieldResolver(8),
             new TemporalFieldResolver(microsToTime, 0),
             new StopFieldResolver(14, "1"), true);
 
 
     private static final File inFile = new File(FileUtil.makeAppDir("traj"), "buses.txt");
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         writeTrajsOut(busesParser.parse(inFile));
     }
 

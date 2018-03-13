@@ -2,10 +2,7 @@ package onethreeseven.stopmove.experiments;
 
 import onethreeseven.common.util.FileUtil;
 import onethreeseven.datastructures.data.STStopTrajectoryParser;
-import onethreeseven.datastructures.data.resolver.IdFieldResolver;
-import onethreeseven.datastructures.data.resolver.NumericFieldsResolver;
-import onethreeseven.datastructures.data.resolver.StopFieldResolver;
-import onethreeseven.datastructures.data.resolver.TemporalFieldResolver;
+import onethreeseven.datastructures.data.resolver.*;
 import onethreeseven.datastructures.model.STStopPt;
 import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.geo.projection.AbstractGeographicProjection;
@@ -13,6 +10,7 @@ import onethreeseven.geo.projection.ProjectionEquirectangular;
 import onethreeseven.stopmove.algorithm.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.temporal.ChronoUnit;
 import java.util.Iterator;
 import java.util.Map;
@@ -31,12 +29,13 @@ public class VaryingSamplingRate {
     private static final File inFile = new File(FileUtil.makeAppDir("traj"), filename + ".txt");
     private static final AbstractGeographicProjection projection = new ProjectionEquirectangular();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         final Map<String, STStopTrajectory> trajMap = new STStopTrajectoryParser(
                 projection,
                 new IdFieldResolver(0),
-                new NumericFieldsResolver(1,2),
+                new LatFieldResolver(1),
+                new LonFieldResolver(2),
                 new TemporalFieldResolver(3),
                 new StopFieldResolver(4),
                 true).parse(inFile);
@@ -61,7 +60,7 @@ public class VaryingSamplingRate {
 
         final POSMIT algoPOSMIT = new POSMIT();
         final CBSMoT algoCBSMoT = new CBSMoT();
-        final SMoT algoSMoT = new SMoT();
+        final GBSMoT algoGBSMoT = new GBSMoT();
         final StopClassificationStats stats = new StopClassificationStats();
 
         System.out.println("Sampling Rate, " +
@@ -107,7 +106,7 @@ public class VaryingSamplingRate {
             //smot
             {
                 stopVariance = 7; //Math.max(0.5, stopVariance);
-                STStopTrajectory computedTraj = algoSMoT.run(resampledTraj, stopVariance, samplingRate * searchRadius);
+                STStopTrajectory computedTraj = algoGBSMoT.run(resampledTraj, stopVariance, samplingRate * searchRadius);
                 stats.calculateStats(resampledTraj, computedTraj);
                 System.out.print(stats.getMCC() + "\n");
             }

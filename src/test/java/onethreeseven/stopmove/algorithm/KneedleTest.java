@@ -15,7 +15,7 @@ public class KneedleTest {
     public void testKneedleFindKnee2d() {
 
         //Test data based on that used in:
-        //"Finding a “Kneedle” in a Haystack: Detecting Knee Points in System Behavior"
+        //"Finding a Kneedle in a Haystack: Detecting Knee Points in System Behavior"
 
         double[][] testData = new double[][]{
                 new double[]{0,0},

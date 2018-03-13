@@ -2,17 +2,15 @@ package onethreeseven.stopmove.experiments;
 
 import onethreeseven.common.util.FileUtil;
 import onethreeseven.datastructures.data.STStopTrajectoryParser;
-import onethreeseven.datastructures.data.resolver.IdFieldResolver;
-import onethreeseven.datastructures.data.resolver.NumericFieldsResolver;
-import onethreeseven.datastructures.data.resolver.StopFieldResolver;
-import onethreeseven.datastructures.data.resolver.TemporalFieldResolver;
+import onethreeseven.datastructures.data.resolver.*;
 import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.geo.projection.ProjectionEquirectangular;
 import onethreeseven.stopmove.algorithm.CBSMoT;
 import onethreeseven.stopmove.algorithm.POSMIT;
-import onethreeseven.stopmove.algorithm.SMoT;
+import onethreeseven.stopmove.algorithm.GBSMoT;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
@@ -29,7 +27,7 @@ public class RunningTimeRealStopClassifiers {
 
     private static final POSMIT algoPOSMIT = new POSMIT();
     private static final CBSMoT algoCBSMOT = new CBSMoT();
-    private static final SMoT algoSMOT = new SMoT();
+    private static final GBSMoT ALGO_SMOT = new GBSMoT();
     private static final int nRuns = 50;
     private static final double spatialParam = 8.6;
     private static final long minTimeMillis = 20000L;
@@ -52,11 +50,12 @@ public class RunningTimeRealStopClassifiers {
 
     private static final ThreadMXBean bean = ManagementFactory.getThreadMXBean();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         Map<String, STStopTrajectory> trajs = new STStopTrajectoryParser(new ProjectionEquirectangular(),
                 new IdFieldResolver(0),
-                new NumericFieldsResolver(1,2),
+                new LatFieldResolver(1),
+                new LonFieldResolver(2),
                 new TemporalFieldResolver(3),
                 new StopFieldResolver(4), true).parse(inFile);
 
@@ -113,7 +112,7 @@ public class RunningTimeRealStopClassifiers {
             //smot
             if(runSMOT){
                 long runningTimeSMOT = bean.getCurrentThreadUserTime();
-                algoSMOT.run(traj, spatialParam, minTimeMillis);
+                ALGO_SMOT.run(traj, spatialParam, minTimeMillis);
                 runningTimeSMOT = (bean.getCurrentThreadUserTime() - runningTimeSMOT);
                 avgRunTimeSMOT += runningTimeSMOT;
             }

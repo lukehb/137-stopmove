@@ -1,8 +1,9 @@
 package onethreeseven.stopmove.algorithm;
 
+import onethreeseven.common.util.Maths;
+
 import java.util.ArrayList;
 
-import static onethreeseven.stopmove.algorithm.Maths2.gaussianSmooth;
 
 /**
  * Given set of values look for the elbow/knee points.
@@ -63,10 +64,10 @@ public class Kneedle {
     private double[][] prepare(double[][] data, int smoothingWindow){
 
         //smooth the data to make local minimum/maximum easier to find (this is Step 1 in the paper)
-        double[][] smoothedData = Maths2.gaussianSmooth2d(data, smoothingWindow);
+        double[][] smoothedData = Maths.gaussianSmooth2d(data, smoothingWindow);
 
         //prepare the data into the unit range (step 2 of paper)
-        double[][] normalisedData = Maths2.minmaxNormalise(smoothedData);
+        double[][] normalisedData = Maths.minmaxNormalise(smoothedData);
 
         //subtract normalised x from normalised y (this is step 3 in the paper)
         for (int i = 0; i < normalisedData.length; i++) {
@@ -96,7 +97,7 @@ public class Kneedle {
             return 0;
         }
 
-        double[] normalisedData = Maths2.minmaxNormalise1d(gaussianSmooth(data, 3));
+        double[] normalisedData = Maths.minmaxNormalise1d(Maths.gaussianSmooth(data, 3));
 
         //do kneedle y'-x' (in this case x' is normalised index value)
         for (int i = 0; i < normalisedData.length; i++) {

@@ -2,19 +2,16 @@ package onethreeseven.stopmove.experiments;
 
 import onethreeseven.common.util.FileUtil;
 import onethreeseven.datastructures.data.STStopTrajectoryParser;
-import onethreeseven.datastructures.data.resolver.IdFieldResolver;
-import onethreeseven.datastructures.data.resolver.NumericFieldsResolver;
-import onethreeseven.datastructures.data.resolver.StopFieldResolver;
-import onethreeseven.datastructures.data.resolver.TemporalFieldResolver;
+import onethreeseven.datastructures.data.resolver.*;
 import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.geo.projection.AbstractGeographicProjection;
 import onethreeseven.geo.projection.ProjectionEquirectangular;
-import onethreeseven.stopmove.algorithm.CBSMoT;
 import onethreeseven.stopmove.algorithm.POSMIT;
-import onethreeseven.stopmove.algorithm.SMoT;
+import onethreeseven.stopmove.algorithm.GBSMoT;
 import onethreeseven.stopmove.algorithm.StopClassificationStats;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -25,7 +22,7 @@ import java.util.Map;
  * this affect the classification.
  * @author Luke Bermingham
  */
-public class MeasureSMoT {
+public class MeasureGBSMoT {
 
     //private static final String filename = "ferry";
     //private static final String filename = "hike";
@@ -41,13 +38,14 @@ public class MeasureSMoT {
     private static final boolean testTemporalParameter = false;
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         System.out.println("Reading in st trajectories...");
         final Map<String, STStopTrajectory> trajMap = new STStopTrajectoryParser(
                 projection,
                 new IdFieldResolver(0),
-                new NumericFieldsResolver(1,2),
+                new LatFieldResolver(1),
+                new LonFieldResolver(2),
                 new TemporalFieldResolver(3),
                 new StopFieldResolver(4),
                 true).parse(inFile);
@@ -80,7 +78,7 @@ public class MeasureSMoT {
         System.out.println("Spatial Parameter (m), Stop Time (ms), MCC");
 
         final StopClassificationStats stats = new StopClassificationStats();
-        final SMoT algo = new SMoT();
+        final GBSMoT algo = new GBSMoT();
 
         for (long stopTime = minStopTime; stopTime <= maxStopTime; stopTime+=timeStepMillis) {
             STStopTrajectory stopTraj = algo.run(traj, epMetres, stopTime);
@@ -96,7 +94,7 @@ public class MeasureSMoT {
         System.out.println("Region Size, Stop Time (ms), MCC");
 
         final StopClassificationStats stats = new StopClassificationStats();
-        final SMoT algo = new SMoT();
+        final GBSMoT algo = new GBSMoT();
 
         for (double regionSize = minRegionSize; regionSize <= maxRegionSize; regionSize+=regionSizeStep) {
             STStopTrajectory stopTraj = algo.run(traj, regionSize, minTimeMillis);
