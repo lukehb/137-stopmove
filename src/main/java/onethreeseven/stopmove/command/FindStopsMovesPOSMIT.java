@@ -43,7 +43,7 @@ public class FindStopsMovesPOSMIT extends AbstractStopMoveCommand {
             System.err.println("Minimum stop probability must between 0 and 1.");
             return false;
         }
-        return true;
+        return super.parametersValid();
     }
 
     @Override

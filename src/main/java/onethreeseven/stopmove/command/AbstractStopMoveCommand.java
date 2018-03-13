@@ -39,10 +39,24 @@ public abstract class AbstractStopMoveCommand extends CLICommand {
         return allSelectedTrajs;
     }
 
+    Map<String, SpatioCompositeTrajectory> allTrajs = null;
+
+    @Override
+    protected boolean parametersValid() {
+        allTrajs = getSelectedTrajs();
+        if(allTrajs.isEmpty()){
+            System.err.println("There was no selected trajectory to find stop/move from.");
+            return false;
+        }
+        return true;
+    }
+
     @Override
     protected boolean runImpl() {
 
-        final Map<String, SpatioCompositeTrajectory> allTrajs = getSelectedTrajs();
+        if(allTrajs == null){
+            return false;
+        }
 
         AddEntitiesTransaction transaction = new AddEntitiesTransaction();
         String layername = generateLayerNameForNewStopMoveTrajs(allTrajs);

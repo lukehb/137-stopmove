@@ -46,7 +46,7 @@ public class FindStopsMovesGBSMoT extends AbstractStopMoveCommand {
             System.err.println("Minimum stop time must be greater than zero.");
             return false;
         }
-        return true;
+        return super.parametersValid();
     }
 
     @Override
