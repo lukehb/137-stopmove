@@ -1,13 +1,11 @@
 package onethreeseven.stopmove.algorithm;
 
-import onethreeseven.datastructures.model.STPt;
-import onethreeseven.datastructures.model.STStopTrajectory;
-import onethreeseven.datastructures.model.SpatioCompositeTrajectory;
-import onethreeseven.datastructures.model.TimeAndStop;
+import onethreeseven.datastructures.model.*;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Comparator;
 
 /**
  * Implementation of the Stop/Move classifier, CB-SMoT, from
@@ -126,7 +124,7 @@ public class CBSMoT {
         //sort using custom comparator which compares speed
         indices = Arrays.stream(indices).
                 boxed().
-                sorted((a, b) -> Double.compare(getSpeed(traj,a), getSpeed(traj,b))).
+                sorted(Comparator.comparingDouble(a -> getSpeed(traj, a))).
                 mapToInt(i -> i).
                 toArray();
         return indices;

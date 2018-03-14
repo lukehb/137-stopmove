@@ -1,6 +1,7 @@
 package onethreeseven.stopmove.command;
 
 import com.beust.jcommander.Parameter;
+import onethreeseven.datastructures.model.STPt;
 import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.datastructures.model.SpatioCompositeTrajectory;
 import onethreeseven.stopmove.algorithm.POSMIT;
@@ -74,16 +75,17 @@ public class FindStopsMovesPOSMIT extends AbstractStopMoveCommand {
     }
 
     @Override
-    protected String generateLayerNameForNewStopMoveTrajs(Map<String, SpatioCompositeTrajectory> allTrajs) {
+    protected String generateLayerNameForNewStopMoveTrajs(Map<String, SpatioCompositeTrajectory<? extends STPt>> allTrajs) {
         return allTrajs.size() + " Stop/Moves Trajectories (POSMIT) StopPr=" + (int)(minStopPr * 100) + "%";
     }
 
     @Override
-    protected STStopTrajectory toStopMoveTraj(SpatioCompositeTrajectory traj) {
+    protected STStopTrajectory toStopMoveTraj(SpatioCompositeTrajectory<? extends STPt> traj) {
         POSMIT posmit = new POSMIT();
         //get params (potentially estimating them if not passed in)
         double hd = this.stopVariance == null ?
                 posmit.estimateStopVariance(traj) : this.stopVariance;
+
         int hi = this.indexNeighbourhood == null ?
                 posmit.estimateSearchRadius(traj, hd) : this.indexNeighbourhood;
 

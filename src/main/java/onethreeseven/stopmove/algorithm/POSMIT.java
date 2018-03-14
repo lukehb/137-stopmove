@@ -114,20 +114,13 @@ public class POSMIT {
      *                a move.
      * @return spatio-temporal stop/move annotated trajectory.
      */
-    public STStopTrajectory toStopTrajectory(SpatioCompositeTrajectory traj,
+    public STStopTrajectory toStopTrajectory(SpatioCompositeTrajectory<? extends STPt> traj,
                                              double[] stopProbabilities, double minStopProbability){
         STStopTrajectory stopTraj = new STStopTrajectory(false, traj.getProjection());
 
         for (int i = 0; i < traj.size(); i++) {
             boolean isStopped = stopProbabilities[i] >= minStopProbability;
-            CompositePt pt = traj.get(i);
-            LocalDateTime time;
-            if(pt instanceof STPt){
-                time = ((STPt) pt).getTime();
-            }else{
-                time = LocalDateTime.now();
-            }
-
+            LocalDateTime time = traj.get(i).getTime();
             stopTraj.addGeographic(traj.getCoords(i, false), new TimeAndStop(time, isStopped));
         }
         return stopTraj;

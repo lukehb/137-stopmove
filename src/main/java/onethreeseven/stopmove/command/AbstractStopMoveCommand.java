@@ -2,6 +2,7 @@ package onethreeseven.stopmove.command;
 
 import onethreeseven.common.util.ColorUtil;
 import onethreeseven.datastructures.graphics.STStopTrajectoryGraphic;
+import onethreeseven.datastructures.model.STPt;
 import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.datastructures.model.SpatioCompositeTrajectory;
 import onethreeseven.jclimod.CLICommand;
@@ -14,6 +15,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.function.Consumer;
 
 /**
  * Abstract command for stop/move command concrete implementations.
@@ -21,17 +23,33 @@ import java.util.ServiceLoader;
  */
 public abstract class AbstractStopMoveCommand extends CLICommand {
 
-    protected Map<String, SpatioCompositeTrajectory> getSelectedTrajs(){
+    protected Consumer<Double> progressReporter = null;
 
-        HashMap<String, SpatioCompositeTrajectory> allSelectedTrajs = new HashMap<>();
+    public void setProgressReporter(Consumer<Double> progressReporter) {
+        this.progressReporter = progressReporter;
+    }
+
+    public Map<String, SpatioCompositeTrajectory<? extends STPt>> getSelectedTrajs(){
+
+        HashMap<String, SpatioCompositeTrajectory<? extends STPt>> allSelectedTrajs = new HashMap<>();
 
         ServiceLoader<EntitySupplier> service = ServiceLoader.load(EntitySupplier.class);
         for (EntitySupplier entitySupplier : service) {
-            Map<String, WrappedEntity> selectedTrajs = entitySupplier.supplyAllMatching(wrappedEntity -> wrappedEntity.isSelectedProperty().get()
-                    && wrappedEntity.getModel() instanceof SpatioCompositeTrajectory);
+            Map<String, WrappedEntity> selectedTrajs = entitySupplier.supplyAllMatching(wrappedEntity -> {
+
+                if (!wrappedEntity.isSelectedProperty().get()) {
+                    return false;
+                }
+                Object modelObj = wrappedEntity.getModel();
+                if (!(modelObj instanceof SpatioCompositeTrajectory)) {
+                    return false;
+                }
+                SpatioCompositeTrajectory traj = (SpatioCompositeTrajectory) modelObj;
+                return ((SpatioCompositeTrajectory) modelObj).size() >= 1 && traj.iterator().next() instanceof STPt;
+            });
 
             for (Map.Entry<String, WrappedEntity> entry : selectedTrajs.entrySet()) {
-                allSelectedTrajs.put(entry.getKey(), (SpatioCompositeTrajectory) entry.getValue().getModel());
+                allSelectedTrajs.put(entry.getKey(), (SpatioCompositeTrajectory<? extends STPt>) entry.getValue().getModel());
             }
 
         }
@@ -39,7 +57,7 @@ public abstract class AbstractStopMoveCommand extends CLICommand {
         return allSelectedTrajs;
     }
 
-    Map<String, SpatioCompositeTrajectory> allTrajs = null;
+    private Map<String, SpatioCompositeTrajectory<? extends STPt>> allTrajs = null;
 
     @Override
     protected boolean parametersValid() {
@@ -61,16 +79,22 @@ public abstract class AbstractStopMoveCommand extends CLICommand {
         AddEntitiesTransaction transaction = new AddEntitiesTransaction();
         String layername = generateLayerNameForNewStopMoveTrajs(allTrajs);
 
-        java.awt.Color[] colors = ColorUtil.generateNColors(allTrajs.size());
+        int nTrajs = allTrajs.size();
+        java.awt.Color[] colors = ColorUtil.generateNColors(nTrajs);
 
         int i = 0;
-        for (Map.Entry<String, SpatioCompositeTrajectory> entry : allTrajs.entrySet()) {
+        for (Map.Entry<String, SpatioCompositeTrajectory<? extends STPt>> entry : allTrajs.entrySet()) {
 
             if(!isRunning.get()){
                 return false;
             }
 
-            SpatioCompositeTrajectory traj = entry.getValue();
+            if(progressReporter != null){
+                double progress = i / (double)nTrajs;
+                progressReporter.accept(progress);
+            }
+
+            SpatioCompositeTrajectory<? extends STPt> traj = entry.getValue();
 
             STStopTrajectory stopTraj = toStopMoveTraj(traj);
 
@@ -97,9 +121,9 @@ public abstract class AbstractStopMoveCommand extends CLICommand {
         return true;
     }
 
-    protected abstract String generateLayerNameForNewStopMoveTrajs(Map<String, SpatioCompositeTrajectory> allTrajs);
+    protected abstract String generateLayerNameForNewStopMoveTrajs(Map<String, SpatioCompositeTrajectory<? extends STPt>> allTrajs);
 
-    protected abstract STStopTrajectory toStopMoveTraj(SpatioCompositeTrajectory traj);
+    protected abstract STStopTrajectory toStopMoveTraj(SpatioCompositeTrajectory<? extends STPt> traj);
 
     @Override
     public String getCategory() {

@@ -13,7 +13,8 @@ public class StopMoveCommandListing extends AbstractCommandsListing {
     protected CLICommand[] createCommands(JCommander jc, Object... args) {
         return new CLICommand[]{
                 new FindStopsMovesPOSMIT(),
-                new FindStopsMovesGBSMoT()
+                new FindStopsMovesGBSMoT(),
+                new FindStopsMovesCBSMoT()
         };
     }
 }

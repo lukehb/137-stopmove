@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/9.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="onethreeseven.stopmove.view.controller.CBSMoTViewController">
+   <center>
+      <GridPane hgap="10.0" BorderPane.alignment="CENTER">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="200.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="200.0" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+         <children>
+            <Label text="Neighbourhood search (m):" GridPane.halignment="RIGHT" GridPane.rowIndex="3" />
+            <Label text="Minimum stop duration (s):" GridPane.halignment="RIGHT" GridPane.rowIndex="4" />
+            <Spinner fx:id="spatialParamSpinner" editable="true" maxWidth="100.0" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="3" />
+            <Spinner fx:id="minStopTimeSecSpinner" editable="true" maxWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+            <Label text="Selected spatio-temporal trajectories:" GridPane.halignment="RIGHT" GridPane.rowIndex="1" />
+            <Label fx:id="nSelectedTrajsLabel" text="0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Label fx:id="feedbackLabel" style="-fx-font-weight: bold;" textFill="#e11919" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
+         </children>
+      </GridPane>
+   </center>
+   <bottom>
+      <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <buttons>
+            <ProgressBar fx:id="progressBar" prefWidth="100.0" progress="0.0" />
+          <Button fx:id="stopMovesBtn" disable="true" mnemonicParsing="false" onAction="#onStopMovesBtnClicked" text="Find Stops/Moves" />
+        </buttons>
+         <BorderPane.margin>
+            <Insets />
+         </BorderPane.margin>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+      </ButtonBar>
+   </bottom>
+</BorderPane>

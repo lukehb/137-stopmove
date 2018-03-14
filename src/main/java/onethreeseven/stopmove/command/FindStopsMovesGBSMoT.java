@@ -1,6 +1,7 @@
 package onethreeseven.stopmove.command;
 
 import com.beust.jcommander.Parameter;
+import onethreeseven.datastructures.model.STPt;
 import onethreeseven.datastructures.model.STStopTrajectory;
 import onethreeseven.datastructures.model.SpatioCompositeTrajectory;
 import onethreeseven.stopmove.algorithm.GBSMoT;
@@ -14,18 +15,18 @@ import java.util.Map;
 public class FindStopsMovesGBSMoT extends AbstractStopMoveCommand {
 
     @Parameter(names = {"-r", "-regionSizeMetres"}, description = "This algorithm partitions the trajectory using grid cells of this size (metres).")
-    private int regionSizeMetres;
+    private double regionSizeMetres;
 
     @Parameter(names = {"-t", "-minStopTime"}, description = "The minimum time for a trajectory to stay in a region for it to be considered a stop.")
     private int minStopTimeSeconds;
 
     @Override
-    protected String generateLayerNameForNewStopMoveTrajs(Map<String, SpatioCompositeTrajectory> allTrajs) {
+    protected String generateLayerNameForNewStopMoveTrajs(Map<String, SpatioCompositeTrajectory<? extends STPt>> allTrajs) {
         return allTrajs.size() + " Stop/Moves Trajectories (POSMIT) Region=" + regionSizeMetres + "m";
     }
 
     @Override
-    protected STStopTrajectory toStopMoveTraj(SpatioCompositeTrajectory traj) {
+    protected STStopTrajectory toStopMoveTraj(SpatioCompositeTrajectory<? extends STPt> traj) {
         GBSMoT gbsMoT = new GBSMoT();
         long minStopTimeMillis = minStopTimeSeconds * 1000L;
         return gbsMoT.run(traj, regionSizeMetres, minStopTimeMillis);

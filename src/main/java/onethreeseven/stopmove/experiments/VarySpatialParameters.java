@@ -4,6 +4,7 @@ import onethreeseven.common.util.FileUtil;
 import onethreeseven.datastructures.data.STStopTrajectoryParser;
 import onethreeseven.datastructures.data.resolver.*;
 import onethreeseven.datastructures.model.STStopTrajectory;
+import onethreeseven.datastructures.util.CountStopsAndMoves;
 import onethreeseven.geo.projection.AbstractGeographicProjection;
 import onethreeseven.geo.projection.ProjectionEquirectangular;
 import onethreeseven.stopmove.algorithm.*;
