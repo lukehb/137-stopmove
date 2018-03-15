@@ -12,27 +12,30 @@ public class StopMoveMenuSupplier implements MenuSupplier {
     @Override
     public void supplyMenus(AbstractMenuBarPopulator populator, BaseTrajSuiteProgram program, Stage primaryStage) {
 
-        TrajSuiteMenu stopmoveMenu = new TrajSuiteMenu("Stops/Moves", 4);
+        TrajSuiteMenu preprocessingMenu = new TrajSuiteMenu("Pre-processing", 4);
+
+        TrajSuiteMenu subMenuStopMove = new TrajSuiteMenu("Find Stops/Moves", 0);
+        preprocessingMenu.addChild(subMenuStopMove);
 
         //posmit
         TrajSuiteMenuItem posmitMenuItem = new TrajSuiteMenuItem("POSMIT", ()->{
             ViewUtil.loadUtilityView(StopMoveMenuSupplier.class, primaryStage, "POSMIT", "/onethreeseven/stopmove/view/posmit.fxml");
         });
-        stopmoveMenu.addChild(posmitMenuItem);
+        subMenuStopMove.addChild(posmitMenuItem);
 
         //cbsmot
         TrajSuiteMenuItem cbsmotMenuItem = new TrajSuiteMenuItem("CB-SMoT", ()->{
             ViewUtil.loadUtilityView(StopMoveMenuSupplier.class, primaryStage, "CB-SMoT", "/onethreeseven/stopmove/view/cbsmot.fxml");
         });
-        stopmoveMenu.addChild(cbsmotMenuItem);
+        subMenuStopMove.addChild(cbsmotMenuItem);
 
         //gbsmot
         TrajSuiteMenuItem gbsmotMenuItem = new TrajSuiteMenuItem("GB-SMoT", ()->{
             ViewUtil.loadUtilityView(StopMoveMenuSupplier.class, primaryStage, "GB-SMoT", "/onethreeseven/stopmove/view/gbsmot.fxml");
         });
-        stopmoveMenu.addChild(gbsmotMenuItem);
+        subMenuStopMove.addChild(gbsmotMenuItem);
 
-        populator.addMenu(stopmoveMenu);
+        populator.addMenu(preprocessingMenu);
 
     }
 }
