@@ -1,5 +1,5 @@
 # 137-stopmove
-Algorithms to automatically discover stops and moves in GPS trajectories.
+A module for [TrajSuite](https://github.com/lukehb/TrajSuite). Algorithms to automatically discover stops and moves in GPS trajectories.
 
 ## Algorithms
 * **POSMIT** - Probability of Stops and Moves in Trajectories. Uses a probabilistic approach to determine if a given entry in the trajectory is stopping or moving. Unlike traditional approaches POSMIT allows the user filter out low probability stops using the minimum stop probability parameter. Also, POSMIT comes with some heuristics to estimate its parameters.
