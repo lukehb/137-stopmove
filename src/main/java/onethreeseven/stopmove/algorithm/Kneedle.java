@@ -78,7 +78,7 @@ public class Kneedle {
     }
 
     private double computeAverageVarianceX(double[][] data){
-        int sumVariance = 0;
+        double sumVariance = 0;
         for (int i = 0; i < data.length - 1; i++) {
             sumVariance += data[i + 1][0] - data[i][0];
         }
